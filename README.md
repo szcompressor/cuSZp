@@ -1,5 +1,5 @@
 # cuSZp
-cuSZp is a lossy error-bounded compression library for compression of floating-point data. This branch is a fine-tuned version for RTM project on NVIDIA V100 GPU.
+cuSZp is a lossy error-bounded compression library for compression of floating-point data in GPU.
 
 ## Environment Requirements
 ### Common
