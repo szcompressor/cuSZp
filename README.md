@@ -1,5 +1,5 @@
 # cuSZp
-cuSZp is a lossy error-bounded compression library for compression of floating-point data.
+cuSZp is a lossy error-bounded compression library for compression of floating-point data. This branch is a fine-tuned version for RTM project on NVIDIA V100 GPU.
 
 ## Environment Requirements
 ### Common
@@ -11,12 +11,9 @@ cuSZp is a lossy error-bounded compression library for compression of floating-p
 To build cuSZp type:
 ```
 cd cuSZp
-mkdir -p build
+mkdir build
 cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=path/to/your/cuszp/installation/directory ..
 make -j
-make install   
+make install
 ```
-This installs the cuSZp library in the build/install/lib and the cuSZp 
-command-line executable in the build/install/bin directory.
-The CMAKE_INSTALL_PREFIX may be defined to set output installation path.
