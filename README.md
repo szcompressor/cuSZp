@@ -4,7 +4,7 @@ This tool fuses all compression or decompression computations into one single ke
 Specifically, the cuSZp framework is structured around four pivotal stages: Quantization and Prediction, Fixed-length Encoding, Global Synchronization, and Block Bit-shuffling. 
 Noting that ongoing optimization efforts are being devoted to cuSZp, aimed at further improving its end-to-end performance.
 
-- Developer：Yafan Huang
+- Developer: Yafan Huang
 - Contributors: Sheng Di, Xiaodong Yu, Guanpeng Li, and Franck Cappello
 
 ## Environment Requirements
