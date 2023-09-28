@@ -11,7 +11,7 @@ int main(int argc, char* argv[])
     int status=0;
     if(argc != 3)
     {
-        printf("Usage: cuSZp [srcFilePath] [abs err bound]\n");
+        printf("Usage: cuSZp [srcFilePath] [rel err bound]\n");
         printf("Example: cuSZp testfloat_8_8_128.dat 1e-3\n");
         exit(0);
     }
@@ -27,6 +27,18 @@ int main(int argc, char* argv[])
     oriData = readFloatData_Yafan(oriFilePath, &nbEle, &status);
     decData = (float*)malloc(nbEle*sizeof(float));
     cmpBytes = (unsigned char*)malloc(nbEle*sizeof(float));
+
+    // Get value range, making it a REL errMode test.
+    float max_val = oriData[0];
+    float min_val = oriData[0];
+    for(size_t i=0; i<nbEle; i++)
+    {
+        if(oriData[i]>max_val)
+            max_val = oriData[i];
+        else if(oriData[i]<min_val)
+            min_val = oriData[i];
+    }
+    errorBound = errorBound * (max_val - min_val);
 
     // cuSZp compression.
     SZp_compress_hostptr(oriData, cmpBytes, nbEle, &cmpSize, errorBound);
@@ -48,8 +60,8 @@ int main(int argc, char* argv[])
             // printf("not bound: %zu oriData: %f, decData: %f, errors: %f, bound: %f\n", i, oriData[i], decData[i], abs(oriData[i]-decData[i]), errBound);
         }
     }
-    if(!not_bound) printf("Pass error check!\n");
-    else printf("Fail error check!\n");
+    if(!not_bound) printf("\033[0;32mPass error check!\033[0m\n");
+    else printf("\033[0;31mFail error check!\033[0m\n");
     
     free(oriData);
     free(decData);

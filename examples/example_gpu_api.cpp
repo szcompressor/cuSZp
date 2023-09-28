@@ -33,7 +33,6 @@ int main(int argc, char* argv[])
     decData = (float*)malloc(nbEle*sizeof(float));
     cmpBytes = (unsigned char*)malloc(nbEle*sizeof(float));
 
-    /* Yafan added for RTM Project. CAN BE REMOVED*/
     // Get value range, making it a REL errMode test.
     float max_val = oriData[0];
     float min_val = oriData[0];

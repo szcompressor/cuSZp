@@ -22,6 +22,7 @@ void SZp_compress_hostptr(float* oriData, unsigned char* cmpBytes, size_t nbEle,
     cudaMemset(d_cmpOffset, 0, sizeof(unsigned int)*cmpOffSize);
     cudaMalloc((void**)&d_flag, sizeof(int)*cmpOffSize);
     cudaMemset(d_flag, 0, sizeof(int)*cmpOffSize);
+    cudaMemset(d_oriData + nbEle, 0, (pad_nbEle - nbEle) * sizeof(float));
 
     // Initializing CUDA Stream.
     cudaStream_t stream;
@@ -34,7 +35,7 @@ void SZp_compress_hostptr(float* oriData, unsigned char* cmpBytes, size_t nbEle,
     cudaDeviceSynchronize();
 
     // Obtain compression ratio and move data back to CPU.  
-    *cmpSize = (size_t)d_cmpOffset[cmpOffSize-2] + (nbEle+31)/32;
+    *cmpSize = (size_t)d_cmpOffset[cmpOffSize-1] + (nbEle+31)/32;
     cudaMemcpy(cmpBytes, d_cmpData, *cmpSize*sizeof(unsigned char), cudaMemcpyDeviceToHost);
 
     // Free memory that is used.
@@ -97,6 +98,7 @@ void SZp_compress_deviceptr(float* d_oriData, unsigned char* d_cmpBytes, size_t 
     int gsize = (nbEle + bsize * cmp_chunk - 1) / (bsize * cmp_chunk);
     int msize = (cmp_tblock_size/32+1) * sizeof(unsigned int);
     int cmpOffSize = gsize + 1;
+    int pad_nbEle = gsize * bsize * cmp_chunk;
 
     // Initializing global memory for GPU compression.
     unsigned int* d_cmpOffset;
@@ -105,6 +107,7 @@ void SZp_compress_deviceptr(float* d_oriData, unsigned char* d_cmpBytes, size_t 
     cudaMemset(d_cmpOffset, 0, sizeof(unsigned int)*cmpOffSize);
     cudaMalloc((void**)&d_flag, sizeof(int)*cmpOffSize);
     cudaMemset(d_flag, 0, sizeof(int)*cmpOffSize);
+    cudaMemset(d_oriData + nbEle, 0, (pad_nbEle - nbEle) * sizeof(float));
 
     // cuSZp GPU compression.
     dim3 blockSize(bsize);
@@ -113,7 +116,7 @@ void SZp_compress_deviceptr(float* d_oriData, unsigned char* d_cmpBytes, size_t 
     cudaDeviceSynchronize();
 
     // Obtain compression ratio and move data back to CPU.  
-    *cmpSize = (size_t)d_cmpOffset[cmpOffSize-2] + (nbEle+31)/32;
+    *cmpSize = (size_t)d_cmpOffset[cmpOffSize-1] + (nbEle+31)/32;
 
     // Free memory that is used.
     cudaFree(d_cmpOffset);

@@ -91,10 +91,17 @@ __global__ void SZp_compress_kernel(const float* const __restrict__ oriData, uns
     if(tid==cmp_tblock_size-1) 
     {
         cmpOffset[bid+1] = (base_idx[warp_num]+7)/8;
+        __threadfence();
         if(bid==0)
+        {
             flag[1] = 2;
+            __threadfence();
+        }
         else
+        {
             flag[bid+1] = 1;
+            __threadfence();
+        }
     }
     __syncthreads();
 
@@ -106,13 +113,11 @@ __global__ void SZp_compress_kernel(const float* const __restrict__ oriData, uns
             while(temp_flag!=2) temp_flag = flag[bid];
             __threadfence();
             cmpOffset[bid] += cmpOffset[bid-1];
+            if(bid==gridDim.x-1) cmpOffset[bid+1] += cmpOffset[bid];
             __threadfence();
             flag[bid+1] = 2;
         }
-    }
-    else
-    {
-        if(tid==cmp_tblock_size-1) cmpOffset[0] = 0;
+        
     }
     __syncthreads();
 
@@ -235,10 +240,17 @@ __global__ void SZp_decompress_kernel(float* const __restrict__ decData, const u
     if(lane==31) 
     {
         cmpOffset[warp+1] = (thread_ofs+7)/8;
+        __threadfence();
         if(warp==0)
+        {
             flag[1] = 2;
+            __threadfence();
+        }
         else
+        {
             flag[warp+1] = 1;
+            __threadfence();
+        }
     }
     __syncthreads();
 
@@ -253,10 +265,6 @@ __global__ void SZp_decompress_kernel(float* const __restrict__ decData, const u
             __threadfence();
             flag[warp+1] = 2;
         }
-    }
-    else
-    {
-        if(!lane) cmpOffset[0] = 0;
     }
     __syncthreads();
 
