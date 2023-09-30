@@ -14,7 +14,7 @@ Noting that ongoing optimization efforts are being devoted to cuSZp, aimed at fu
 - Cuda Toolkit >= 11.0
 - GCC >= 7.3.0
 
-## Compile and Run cuSZp Binary
+## Compile and Run cuSZp Prepared Executable Binary
 You can compile and install cuSZp with following commands:
 ```shell
 $ git clone https://github.com/szcompressor/cuSZp.git
@@ -24,35 +24,62 @@ $ cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../install/ ..
 $ make -j
 $ make install
 ```
-# After compilation, you will see a executable binary ```cuSZpExample_gpu_api``` in path ```cuSZp/install/bin/```.
-To use this binary, try following commands. We here use RTM pressure_1000 dataset (1.43 GB, 1008x1008x352) as an example.
+After compilation, you will see a list of executable binaries ```cuSZp/install/bin/```:
+- ```cuSZp_cpu_f32_api```: single-precision, host pointers (i.e. on CPU).
+- ```cuSZp_gpu_f32_api```: single-precision, device pointers (i.e. on GPU).
+- ```cuSZp_cpu_f64_api```: double-precision, host pointers (i.e. on CPU).
+- ```cuSZp_gpu_f64_api```: double-precision, device pointers (i.e. on GPU).
+
+To use those binaries, try following commands. 
+We here use RTM pressure_2000 dataset (1.4 GB, 1008x1008x352) for single-precision example, and NWChem acd-tst.bin.d64 (6.0 GB) for double-precision example.
 ```shell
-# ./cuSZpExample_gpu_api TARGET_HPC_DATASET REL_ERROR_BOUND
-$ ./cuSZpExample_gpu_api ./pressure_1000 1e-4
+# Example for single-precision API
+# ./cuSZp_gpu_f32_api TARGET_HPC_DATASET ERROR_MODE ERROR_BOUND
+#                                        ABS or REL
+$ ./cuSZp_gpu_f32_api ./pressure_2000 REL 1e-4
 cuSZp finished!
-cuSZp compression   end-to-end speed: 173.440116 GB/s
-cuSZp decompression end-to-end speed: 267.704834 GB/s
-cuSZp compression ratio: 65.041033
+cuSZp compression   end-to-end speed: 151.564649 GB/s
+cuSZp decompression end-to-end speed: 232.503219 GB/s
+cuSZp compression ratio: 13.003452
+
+Pass error check!
+$
+# Example for double-precision API
+# ./cuSZp_gpu_f64_api TARGET_HPC_DATASET ERROR_MODE ERROR_BOUND
+#                                        ABS or REL
+$ ./cuSZp_gpu_f64_api ./acd-tst.bin.d64 ABS 1E-8
+cuSZp finished!
+cuSZp compression   end-to-end speed: 110.117965 GB/s
+cuSZp decompression end-to-end speed: 222.743097 GB/s
+cuSZp compression ratio: 3.990585
 
 Pass error check!
 ```
 More HPC dataset can be downloaded from [SDRBench](https://sdrbench.github.io/).
 
 ## Using cuSZp as an Internal API
-cuSZp provides an example for using cuSZp compression and decompression, which can be found at ```cuSZp/examples/example_gpu_api.cpp```.
-Assuming your original data, compressed data, and reconstructed data are all device pointers (allocated on GPU). The compression and decompression APIs can be called as below:
+This repository provides several examples for using cuSZp compression and decompression for different scenarios (device pointer? host pointer? f32 or f64?).
+The examples can be found in ```cuSZp/examples/```.
+Assuming your original data, compressed data, and reconstructed data are all device pointers (allocated on GPU), and the data type is single-precision. The compression and decompression APIs can be called as below:
 ```C++
+// For measuring the end-to-end throughput.
+TimingGPU timer_GPU;
+
 // cuSZp compression.
 timer_GPU.StartCounter(); // set timer
-SZp_compress_deviceptr(d_oriData, d_cmpBytes, nbEle, &cmpSize, errorBound, stream);
+SZp_compress_deviceptr_f32(d_oriData, d_cmpBytes, nbEle, &cmpSize, errorBound, stream);
 float cmpTime = timer_GPU.GetCounter();
 
 // cuSZp decompression.
 timer_GPU.StartCounter(); // set timer
-SZp_decompress_deviceptr(d_decData, d_cmpBytes, nbEle, cmpSize, errorBound, stream);
+SZp_decompress_deviceptr_f32(d_decData, d_cmpBytes, nbEle, cmpSize, errorBound, stream);
 float decTime = timer_GPU.GetCounter();
 ```
-If your original data, compressed data, and reconstructed data are all host pointers (allocated on CPU). You can check ```cuSZp/examples/example_cpu_api.cpp``` for more details.
+More details can be checked in:
+- **f32-hostptr**: ```cuSZp/examples/cuSZp_cpu_f32_api.cpp```.
+- **f32-deviceptr**: ```cuSZp/examples/cuSZp_gpu_f32_api.cpp```.
+- **f64-hostptr**: ```cuSZp/examples/cuSZp_cpu_f64_api.cpp```.
+- **f64-deviceptr**: ```cuSZp/examples/cuSZp_gpu_f64_api.cpp```.
 
 ## Citation
 ```bibtex
