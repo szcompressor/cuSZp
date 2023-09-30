@@ -26,7 +26,7 @@ __global__ void SZp_compress_kernel_f64(const double* const __restrict__ oriData
     const int start_idx = idx * cmp_chunk_f64;
     const int start_block_idx = start_idx/32;
     const int rate_ofs = (nbEle+31)/32;
-    const double recipPrecision = 0.5f/eb;
+    const double recipPrecision = 0.5/eb;
 
     int temp_start_idx, temp_end_idx;
     int quant_chunk_idx;
