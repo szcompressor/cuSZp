@@ -24,7 +24,7 @@ $ cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../install/ ..
 $ make -j
 $ make install
 ```
-After compilation, you will see a executable binary ```cuSZpExample_gpu_api``` in path ```cuSZp/install/bin/```.
+# After compilation, you will see a executable binary ```cuSZpExample_gpu_api``` in path ```cuSZp/install/bin/```.
 To use this binary, try following commands. We here use RTM pressure_1000 dataset (1.43 GB, 1008x1008x352) as an example.
 ```shell
 # ./cuSZpExample_gpu_api TARGET_HPC_DATASET REL_ERROR_BOUND
