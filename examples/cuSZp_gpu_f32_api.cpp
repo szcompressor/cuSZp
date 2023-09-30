@@ -1,24 +1,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 #include <cuda_runtime.h>
 #include <cuSZp_utility.h>
-#include <cuSZp_entry.h>
+#include <cuSZp_entry_f32.h>
 #include <cuSZp_timer.h>
 
 int main(int argc, char* argv[])
 {
     // Read input information.
     char oriFilePath[640];
+    char errorMode[20];
     int status=0;
-    if(argc != 3)
+    if(argc != 4)
     {
-        printf("Usage: cuSZp [srcFilePath] [rel err bound]\n");
-        printf("Example: cuSZp testfloat_8_8_128.dat 1e-3\n");
+        printf("Usage: cuSZp_gpu_f32_api [srcFilePath] [errorMode] [errBound] # errorMode can only be ABS or REL\n");
+        printf("Example: cuSZp_gpu_f32_api testfloat_8_8_128.dat ABS 1E-2     # compress dataset with absolute 1E-2 error bound\n");
+        printf("         cuSZp_gpu_f32_api testfloat_8_8_128.dat REL 1e-3     # compress dataset with relative 1E-3 error bound\n");
         exit(0);
     }
     sprintf(oriFilePath, "%s", argv[1]);
-    float errorBound = atof(argv[2]);
+    sprintf(errorMode, "%s", argv[2]);
+    float errorBound = atof(argv[3]);
 
     // For measuring the end-to-end throughput.
     TimingGPU timer_GPU;
@@ -33,17 +37,25 @@ int main(int argc, char* argv[])
     decData = (float*)malloc(nbEle*sizeof(float));
     cmpBytes = (unsigned char*)malloc(nbEle*sizeof(float));
 
-    // Get value range, making it a REL errMode test.
-    float max_val = oriData[0];
-    float min_val = oriData[0];
-    for(size_t i=0; i<nbEle; i++)
+    // Generating error bounds.
+    if(strcmp(errorMode, "REL")==0)
     {
-        if(oriData[i]>max_val)
-            max_val = oriData[i];
-        else if(oriData[i]<min_val)
-            min_val = oriData[i];
+        float max_val = oriData[0];
+        float min_val = oriData[0];
+        for(size_t i=0; i<nbEle; i++)
+        {
+            if(oriData[i]>max_val)
+                max_val = oriData[i];
+            else if(oriData[i]<min_val)
+                min_val = oriData[i];
+        }
+        errorBound = errorBound * (max_val - min_val);
     }
-    errorBound = errorBound * (max_val - min_val);
+    else if(strcmp(errorMode, "ABS")!=0)
+    {
+        printf("invalid errorMode! errorMode can only be ABS or REL.\n");
+        exit(0);
+    }
 
     // Input data preparation on GPU.
     float* d_oriData;
@@ -60,19 +72,18 @@ int main(int argc, char* argv[])
     cudaStream_t stream;
     cudaStreamCreate(&stream);
 
-    /* Yafan added for RTM Project. CAN BE REMOVED*/
     // Just a warmup.
     for(int i=0; i<3; i++)
-        SZp_compress_deviceptr(d_oriData, d_cmpBytes, nbEle, &cmpSize, errorBound, stream);
+        SZp_compress_deviceptr_f32(d_oriData, d_cmpBytes, nbEle, &cmpSize, errorBound, stream);
 
     // cuSZp compression.
     timer_GPU.StartCounter(); // set timer
-    SZp_compress_deviceptr(d_oriData, d_cmpBytes, nbEle, &cmpSize, errorBound, stream);
+    SZp_compress_deviceptr_f32(d_oriData, d_cmpBytes, nbEle, &cmpSize, errorBound, stream);
     float cmpTime = timer_GPU.GetCounter();
     
     // cuSZp decompression.
     timer_GPU.StartCounter(); // set timer
-    SZp_decompress_deviceptr(d_decData, d_cmpBytes, nbEle, cmpSize, errorBound, stream);
+    SZp_decompress_deviceptr_f32(d_decData, d_cmpBytes, nbEle, cmpSize, errorBound, stream);
     float decTime = timer_GPU.GetCounter();
 
     // Print result.
@@ -80,7 +91,6 @@ int main(int argc, char* argv[])
     printf("cuSZp compression   end-to-end speed: %f GB/s\n", (nbEle*sizeof(float)/1024.0/1024.0)/cmpTime);
     printf("cuSZp decompression end-to-end speed: %f GB/s\n", (nbEle*sizeof(float)/1024.0/1024.0)/decTime);
     printf("cuSZp compression ratio: %f\n\n", (nbEle*sizeof(float)/1024.0/1024.0)/(cmpSize*sizeof(unsigned char)/1024.0/1024.0));
-    
 
     // Error check
     cudaMemcpy(cmpBytes, d_cmpBytes, cmpSize*sizeof(unsigned char), cudaMemcpyDeviceToHost);
@@ -97,6 +107,7 @@ int main(int argc, char* argv[])
     if(!not_bound) printf("\033[0;32mPass error check!\033[0m\n");
     else printf("\033[0;31mFail error check!\033[0m\n");
     
+    // Free allocated data.
     free(oriData);
     free(decData);
     free(cmpBytes);

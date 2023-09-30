@@ -1,6 +1,6 @@
 # cuSZp
-cuSZp is a user-friendly error-bounded lossy compression tool specifically designed for the compression of floating-point data using NVIDIA GPUs. 
-This tool fuses all compression or decompression computations into one single kernel, achieving ultra end-to-end throughput.
+cuSZp is a user-friendly error-bounded lossy compression tool specifically designed for the compression of single- and double-precision floating-point data using NVIDIA GPUs. 
+This tool fuses all compression or decompression computations into one single kernel, achieving ultra fast end-to-end throughput.
 Specifically, the cuSZp framework is structured around four pivotal stages: Quantization and Prediction, Fixed-length Encoding, Global Synchronization, and Block Bit-shuffling. 
 Noting that ongoing optimization efforts are being devoted to cuSZp, aimed at further improving its end-to-end performance.
 

@@ -1,6 +1,6 @@
 //
 // Created by Yafan Huang on 5/31/22.
-//     Copied from SZx.
+//     Copied from SZ2, QCAT, and SZx.
 //
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,23 +10,21 @@
 #include "cuSZp_utility.h"
 
 /*Macro Definition for Processing Data*/
-// #define SZ_SCES 0  //successful
+#define SZ_SCES 0  //successful
+#define SZ_NSCS -1 //Not successful
+#define SZ_FERR -2 //Failed to open input file
+#define SZ_TERR -3 //wrong data type (should be only float or double)
 #define RW_SCES 0
 #define RW_FERR 1
 #define RW_TERR 2
 #define LITTLE_ENDIAN_SYSTEM 0
 #define QCAT_BUFS 64
 
+
 /*Global Varaibles for Processing Data*/
 int dataEndianType_Yafan = 0;
 int sysEndianType_Yafan = 0; //0 means little endian, 1 means big endian
 
-typedef union lint32
-{
-	int ivalue;
-	unsigned int uivalue;
-	unsigned char byte[4];
-} lint32;
 
 typedef union llfloat
 {
@@ -34,6 +32,15 @@ typedef union llfloat
     unsigned int ivalue;
     unsigned char byte[4];
 } llfloat;
+
+
+typedef union lldouble
+{
+    double value;
+    uint64_t lvalue;
+    unsigned char byte[8];
+} lldouble;
+
 
 /** ************************************************************************
  * @brief Reverse 4-bit-length unsigned char array.
@@ -50,6 +57,32 @@ void symTransForm_4Bytes(unsigned char data[4])
         data[1] = data[2];
         data[2] = tmp;
 }
+
+
+/** ************************************************************************
+ * @brief Reverse 8-bit-length unsigned char array.
+ * 
+ * @param   data[8]         8-bit-length unsigned char array.
+ * *********************************************************************** */
+void symTransform_8bytes(unsigned char data[8])
+{
+	unsigned char tmp = data[0];
+	data[0] = data[7];
+	data[7] = tmp;
+
+	tmp = data[1];
+	data[1] = data[6];
+	data[6] = tmp;
+
+	tmp = data[2];
+	data[2] = data[5];
+	data[5] = tmp;
+
+	tmp = data[3];
+	data[3] = data[4];
+	data[4] = tmp;
+}
+
 
 /** ************************************************************************
  * @brief Read byte data from path to source binary format file.
@@ -89,6 +122,7 @@ unsigned char *readByteData_Yafan(char *srcFilePath, size_t *byteLength, int *st
     *status = RW_SCES;
     return byteBuf;
 }
+
 
 /** ************************************************************************
  * @brief Read float data from path to source binary format file in endian systems.
@@ -136,6 +170,7 @@ float *readFloatData_systemEndian_Yafan(char *srcFilePath, size_t *nbEle, int *s
     *status = RW_SCES;
     return daBuf;
 }
+
 
 /** ************************************************************************
  * @brief Read float data from path to source binary format file.
@@ -185,6 +220,96 @@ float *readFloatData_Yafan(char *srcFilePath, size_t *nbEle, int *status)
 }
 
 /** ************************************************************************
+ * @brief Read double data from path to source binary format file in endian systems.
+ *        Usually used for compressing data from input file.
+ *        Variables nbEle and status can be obtained through this function. 
+ * 
+ * @param   srcFilePath     input source file path
+ * @param   nbEle           the length of double array
+ * @param   status          data processing states (macro definitions) 
+ * 
+ * @return  daBuf           double array with length nbEle
+ * *********************************************************************** */
+double *readDoubleData_systemEndian_Yafan(char *srcFilePath, size_t *nbEle, int *status)
+{
+	size_t inSize;
+	FILE *pFile = fopen(srcFilePath, "rb");
+    if (pFile == NULL)
+    {
+        printf("Failed to open input file. 1\n");
+        *status = SZ_FERR;
+        return NULL;
+    }
+	fseek(pFile, 0, SEEK_END);
+    inSize = ftell(pFile);
+    *nbEle = inSize/8; //only support double in this version
+    fclose(pFile);
+
+    double *daBuf = (double *)malloc(inSize);
+
+    pFile = fopen(srcFilePath, "rb");
+    if (pFile == NULL)
+    {
+        printf("Failed to open input file. 2\n");
+        *status = SZ_FERR;
+        return NULL;
+    }
+    fread(daBuf, 8, *nbEle, pFile);
+    fclose(pFile);
+    *status = SZ_SCES;
+    return daBuf;
+}
+
+
+/** ************************************************************************
+ * @brief Read double data from path to source binary format file.
+ *        Usually used for compressing data from input file.
+ *        Variables nbEle and status can be obtained through this function. 
+ * 
+ * @param   srcFilePath     input source file path
+ * @param   nbEle           the length of double array
+ * @param   status          data processing states (macro definitions) 
+ * 
+ * @return  daBuf           double array with length nbEle
+ * *********************************************************************** */
+double *readDoubleData_Yafan(char *srcFilePath, size_t *nbEle, int *status)
+{
+	int state = SZ_SCES;
+	if(dataEndianType_Yafan==sysEndianType_Yafan)
+	{
+		double *daBuf = readDoubleData_systemEndian_Yafan(srcFilePath, nbEle,&state);
+		*status = state;
+		return daBuf;
+	}
+	else
+	{
+		size_t i,j;
+
+		size_t byteLength;
+		unsigned char* bytes = readByteData_Yafan(srcFilePath, &byteLength, &state);
+		if(state==SZ_FERR)
+		{
+			*status = SZ_FERR;
+			return NULL;
+		}
+		double *daBuf = (double *)malloc(byteLength);
+		*nbEle = byteLength/8;
+
+		lldouble buf;
+		for(i = 0;i<*nbEle;i++)
+		{
+			j = i*8;
+			memcpy(buf.byte, bytes+j, 8);
+			symTransform_8bytes(buf.byte);
+			daBuf[i] = buf.value;
+		}
+		free(bytes);
+		return daBuf;
+	}
+}
+
+
+/** ************************************************************************
  * @brief Write byte data to binary format file.
  *        Usually used for writing compressed data.
  *        Variable status can be obtained/switched through this function. 
@@ -208,6 +333,7 @@ void writeByteData_Yafan(unsigned char *bytes, size_t byteLength, char *tgtFileP
     fclose(pFile);
     *status = RW_SCES;
 }
+
 
 /** ************************************************************************
  * @brief Write float data to binary format file.
@@ -240,47 +366,42 @@ void writeFloatData_inBytes_Yafan(float *data, size_t nbEle, char* tgtFilePath, 
 	*status = state;
 }
 
-// void convertIntArrayToBytes(int* states, size_t stateLength, unsigned char* bytes)
-// {
-// 	lint32 ls;
-// 	size_t index = 0;
-// 	size_t i;
-// 	if(sysEndianType_Yafan==dataEndianType_Yafan)
-// 	{
-// 		for(i=0;i<stateLength;i++)
-// 		{
-// 			index = i << 2; //==i*4
-// 			ls.ivalue = states[i];
-// 			bytes[index] = ls.byte[0];
-// 			bytes[index+1] = ls.byte[1];
-// 			bytes[index+2] = ls.byte[2];
-// 			bytes[index+3] = ls.byte[3];
-// 		}		
-// 	}
-// 	else
-// 	{
-// 		for(i=0;i<stateLength;i++)
-// 		{
-// 			index = i << 2; //==i*4
-// 			ls.ivalue = states[i];
-// 			bytes[index] = ls.byte[3];
-// 			bytes[index+1] = ls.byte[2];
-// 			bytes[index+2] = ls.byte[1];
-// 			bytes[index+3] = ls.byte[0];
-// 		}			
-// 	}
-// }
 
-// void writeIntData_inBytes(int *states, size_t stateLength, char *tgtFilePath, int *status)
-// {
-// 	int state = SZ_SCES;
-// 	size_t byteLength = stateLength*4;
-// 	unsigned char* bytes = (unsigned char*)malloc(byteLength*sizeof(char));
-// 	convertIntArrayToBytes(states, stateLength, bytes);
-// 	writeByteData_Yafan(bytes, byteLength, tgtFilePath, &state);
-// 	free(bytes);
-// 	*status = state;
-// }
+/** ************************************************************************
+ * @brief Write double data to binary format file.
+ *        Usually used for writing decompressed (reconstructed) data.
+ *        Variable status can be obtained/switched through this function. 
+ * 
+ * @param   bytes           unsigned char array (compressed data)
+ * @param   nbEle           the length of float array
+ * @param   tgtFilePath     output file path
+ * @param   status          data processing states (macro definitions) 
+ * *********************************************************************** */
+void writeDoubleData_inBytes_Yafan(double *data, size_t nbEle, char* tgtFilePath, int *status)
+{
+	size_t i = 0, index = 0;
+	int state = SZ_SCES;
+	lldouble buf;
+	unsigned char* bytes = (unsigned char*)malloc(nbEle*sizeof(double));
+	for(i=0;i<nbEle;i++)
+	{
+		index = i*8;
+		buf.value = data[i];
+		bytes[index+0] = buf.byte[0];
+		bytes[index+1] = buf.byte[1];
+		bytes[index+2] = buf.byte[2];
+		bytes[index+3] = buf.byte[3];
+		bytes[index+4] = buf.byte[4];
+		bytes[index+5] = buf.byte[5];
+		bytes[index+6] = buf.byte[6];
+		bytes[index+7] = buf.byte[7];
+	}
+
+	size_t byteLength = nbEle*sizeof(double);
+	writeByteData_Yafan(bytes, byteLength, tgtFilePath, &state);
+	free(bytes);
+	*status = state;
+}
 
 
 /** ************************************************************************
@@ -363,6 +484,7 @@ double SSIM_3d_calcWindow_float(float* data, float* other, size_t size1, size_t 
     return ssim;
 }
 
+
 /** ************************************************************************
  * @brief Calculate SSIM between 3D original and decompressed (reconstructed) data.
  *        API for computing SSIM.
@@ -412,7 +534,6 @@ double computeSSIM(float* oriData, float* decData, size_t size2, size_t size1, s
     }
     return ssimSum/nw;
 }
-
 
 /** ************************************************************************
  * @brief Calculate PSNR between 3D original and decompressed (reconstructed) data.

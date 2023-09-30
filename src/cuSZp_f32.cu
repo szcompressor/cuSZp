@@ -1,7 +1,6 @@
-#include "cuSZp.h"
-#include <stdio.h>
+#include "cuSZp_f32.h"
 
-__device__ inline int quantization(float data, float recipPrecision)
+__device__ inline int quantization_f32(float data, float recipPrecision)
 {
     float dataRecip = data*recipPrecision;
     int s = dataRecip>=-0.5f?0:1;
@@ -15,19 +14,16 @@ __device__ inline int get_bit_num(unsigned int x)
 }
 
 
-
-__global__ void SZp_compress_kernel(const float* const __restrict__ oriData, unsigned char* const __restrict__ cmpData, volatile unsigned int* const __restrict__ cmpOffset, volatile int* const __restrict__ flag, const float eb, const size_t nbEle)
+__global__ void SZp_compress_kernel_f32(const float* const __restrict__ oriData, unsigned char* const __restrict__ cmpData, volatile unsigned int* const __restrict__ cmpOffset, volatile int* const __restrict__ flag, const float eb, const size_t nbEle)
 {
-    __shared__ unsigned int base_idx[cmp_tblock_size/32+1];
+    __shared__ unsigned int base_idx;
 
     const int tid = threadIdx.x;
-    const int bid = blockIdx.x;
-    const int idx = bid * blockDim.x + tid;
-    const int lane = tid & 31;
-    const int warp = tid >> 5;
-    const int block_num = cmp_chunk/32;
-    const int warp_num = cmp_tblock_size/32;
-    const int start_idx = idx * cmp_chunk;
+    const int idx = blockIdx.x * blockDim.x + tid;
+    const int lane = idx & 31;
+    const int warp = idx >> 5;
+    const int block_num = cmp_chunk_f32/32;
+    const int start_idx = idx * cmp_chunk_f32;
     const int start_block_idx = start_idx/32;
     const int rate_ofs = (nbEle+31)/32;
     const float recipPrecision = 0.5f/eb;
@@ -36,7 +32,7 @@ __global__ void SZp_compress_kernel(const float* const __restrict__ oriData, uns
     int quant_chunk_idx;
     int block_idx;
     int currQuant, lorenQuant, prevQuant, maxQuant;
-    int absQuant[cmp_chunk];
+    int absQuant[cmp_chunk_f32];
     unsigned int sign_flag[block_num];
     int sign_ofs;
     int fixed_rate[block_num];
@@ -53,8 +49,8 @@ __global__ void SZp_compress_kernel(const float* const __restrict__ oriData, uns
 
         for(int i=temp_start_idx; i<temp_end_idx; i++)
         {
-            quant_chunk_idx = i%cmp_chunk;
-            currQuant = quantization(oriData[i], recipPrecision);
+            quant_chunk_idx = i%cmp_chunk_f32;
+            currQuant = quantization_f32(oriData[i], recipPrecision);
             lorenQuant = currQuant - prevQuant;
             prevQuant = currQuant;
             sign_ofs = i % 32;
@@ -74,60 +70,48 @@ __global__ void SZp_compress_kernel(const float* const __restrict__ oriData, uns
         int tmp = __shfl_up_sync(0xffffffff, thread_ofs, i);
         if(lane >= i) thread_ofs += tmp;
     }
-    if(lane==31) base_idx[warp+1] = thread_ofs;
-    if(tid==0) base_idx[0] = 0;
     __syncthreads();
 
-    if(warp==0)
+    if(lane==31) 
     {
-        for(int i=1; i<32; i<<=1)
-        {
-            int tmp = __shfl_up_sync(0xffffffff, base_idx[lane+1], i);
-            if(lane >= i) base_idx[lane+1] += tmp;
-        }
-    }
-    __syncthreads();
-
-    if(tid==cmp_tblock_size-1) 
-    {
-        cmpOffset[bid+1] = (base_idx[warp_num]+7)/8;
+        cmpOffset[warp+1] = (thread_ofs+7)/8;
         __threadfence();
-        if(bid==0)
+        if(warp==0)
         {
             flag[1] = 2;
             __threadfence();
         }
         else
         {
-            flag[bid+1] = 1;
+            flag[warp+1] = 1;
             __threadfence();
         }
     }
     __syncthreads();
 
-    if(bid>0)
+    if(warp>0)
     {
-        if(tid==cmp_tblock_size-1)
+        if(!lane)
         {
             int temp_flag = 1;
-            while(temp_flag!=2) temp_flag = flag[bid];
+            while(temp_flag!=2) temp_flag = flag[warp];
             __threadfence();
-            cmpOffset[bid] += cmpOffset[bid-1];
-            if(bid==gridDim.x-1) cmpOffset[bid+1] += cmpOffset[bid];
+            cmpOffset[warp] += cmpOffset[warp-1];
+            if(warp==gridDim.x-1) cmpOffset[warp+1] += cmpOffset[warp];
             __threadfence();
-            flag[bid+1] = 2;
+            flag[warp+1] = 2;
         }
         
     }
     __syncthreads();
 
-    if(!lane) base_idx[warp] = (base_idx[warp]+7)/8 + cmpOffset[bid] + rate_ofs;
+    if(!lane) base_idx = cmpOffset[warp] + rate_ofs;
     __syncthreads();
 
     unsigned int prev_thread = __shfl_up_sync(0xffffffff, thread_ofs, 1);
     unsigned int cmp_byte_ofs;
-    if(!lane) cmp_byte_ofs = base_idx[warp];
-    else cmp_byte_ofs = base_idx[warp] + prev_thread / 8;
+    if(!lane) cmp_byte_ofs = base_idx;
+    else cmp_byte_ofs = base_idx + prev_thread / 8;
     
     for(int j=0; j<block_num; j++)  
     {
@@ -197,8 +181,7 @@ __global__ void SZp_compress_kernel(const float* const __restrict__ oriData, uns
 }
 
 
-
-__global__ void SZp_decompress_kernel(float* const __restrict__ decData, const unsigned char* const __restrict__ cmpData, volatile unsigned int* const __restrict__ cmpOffset, volatile int* const __restrict__ flag, const float eb, const size_t nbEle)
+__global__ void SZp_decompress_kernel_f32(float* const __restrict__ decData, const unsigned char* const __restrict__ cmpData, volatile unsigned int* const __restrict__ cmpOffset, volatile int* const __restrict__ flag, const float eb, const size_t nbEle)
 {
     __shared__ unsigned int base_idx;
 
@@ -206,8 +189,8 @@ __global__ void SZp_decompress_kernel(float* const __restrict__ decData, const u
     const int idx = blockIdx.x * blockDim.x + tid;
     const int lane = idx & 31;
     const int warp = idx >> 5;
-    const int block_num = dec_chunk/32;
-    const int start_idx = idx * dec_chunk;
+    const int block_num = dec_chunk_f32/32;
+    const int start_idx = idx * dec_chunk_f32;
     const int start_block_idx = start_idx/32;
     const int rate_ofs = (nbEle+31)/32;
 

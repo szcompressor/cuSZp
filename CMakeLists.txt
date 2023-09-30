@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 project(cuSZp
-        VERSION 0.0.1
+        VERSION 0.0.2
         DESCRIPTION "Error-bounded GPU lossy compression library"
         )
 set(namespace "cuSZp")
@@ -38,10 +38,12 @@ add_library(${PROJECT_NAME} STATIC)
 
 target_sources(${PROJECT_NAME}
         PRIVATE
-        src/cuSZp.cu
+        src/cuSZp_f32.cu
+        src/cuSZp_f64.cu
         src/cuSZp_utility.cu
         src/cuSZp_timer.cu
-        src/cuSZp_entry.cu
+        src/cuSZp_entry_f32.cu
+        src/cuSZp_entry_f64.cu
         )
 
 target_include_directories(${PROJECT_NAME}
@@ -60,10 +62,12 @@ target_include_directories(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME} PRIVATE CUDA::cudart)
 
 set(public_headers
-        include/cuSZp.h
+        include/cuSZp_f32.h
+        include/cuSZp_f64.h
         include/cuSZp_utility.h
         include/cuSZp_timer.h
-        include/cuSZp_entry.h
+        include/cuSZp_entry_f32.h
+        include/cuSZp_entry_f64.h
         )
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
