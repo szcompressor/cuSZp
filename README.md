@@ -1,4 +1,6 @@
 # cuSZp
+<a href="./LICENSE"><img src="https://img.shields.io/badge/License-BSD%203--Clause-blue.svg"></a> 
+
 cuSZp is a user-friendly error-bounded lossy compression tool specifically designed for the compression of single- and double-precision floating-point data using NVIDIA GPUs. 
 This tool fuses all compression or decompression computations into one single kernel, achieving ultra fast end-to-end throughput.
 Specifically, the cuSZp framework is structured around four pivotal stages: Quantization and Prediction, Fixed-length Encoding, Global Synchronization, and Block Bit-shuffling. 
@@ -96,6 +98,9 @@ More details can be checked in:
      series = {SC'23}
 }
 ```
+
+## Copyright
+(C) 2023 by University of Iowa and Argonne National Laboratory. More details see [COPYRIGHT](https://github.com/szcompressor/cuSZp/blob/master/LICENSE).
 
 ## Acknowledgement
 This research was supported by the Exascale Computing Project (ECP), Project Number: 17-SC-20-SC, a collaborative effort of two DOE organizations – the Office of Science and the National Nuclear Security Administration, responsible for the planning and preparation of a capable exascale ecosystem, including software, applications, hardware, advanced system engineering and early testbed platforms, to support the nation’s exascale computing imperative. The material was supported by the U.S. Department of Energy, Office of Science, Advanced Scientific Computing Research (ASCR), under contract DE-AC02-06CH11357, and supported by the National Science Foundation under Grant OAC-2003709 and OAC-2104023. We acknowledge the computing resources provided on Bebop (operated by Laboratory Computing Resource Center at Argonne) and on Theta and JLSE (operated by Argonne Leadership Computing Facility). We acknowledge the support of ARAMCO. 
