@@ -85,22 +85,17 @@ More details can be checked in:
 
 ## Citation
 ```bibtex
-@inproceedings{cuSZp2023huang,
-      title = {cuSZp: An Ultra-Fast GPU Error-Bounded Lossy Compression Framework with Optimized End-to-End Performance}
-     author = {Huang, Yafan and Di, Sheng and Yu, Xiaodong and Li, Guanpeng and Cappello, Franck},
-       year = {2023},
-       isbn = {979-8-4007-0109-2/23/11},
-  publisher = {Association for Computing Machinery},
-    address = {Denver, CO, USA},
-        doi = {10.1145/3581784.3607048},
-  booktitle = {Proceedings of the International Conference for High Performance Computing, Networking, Storage and Analysis},
-   keywords = {Lossy compression; parallel computing; HPC; GPU},
-     series = {SC'23}
+@inproceedings{huang2023cuszp,
+  title={cuSZp: An Ultra-fast GPU Error-bounded Lossy Compression Framework with Optimized End-to-End Performance},
+  author={Huang, Yafan and Di, Sheng and Yu, Xiaodong and Li, Guanpeng and Cappello, Franck},
+  booktitle={Proceedings of the International Conference for High Performance Computing, Networking, Storage and Analysis},
+  pages={1--13},
+  year={2023}
 }
 ```
 
 ## Copyright
-(C) 2023 by Argonne National Laboratory and University of Iowa. More details see [COPYRIGHT](https://github.com/szcompressor/cuSZp/blob/master/LICENSE).
+(C) 2023 by Argonne National Laboratory and University of Iowa. For more details see [COPYRIGHT](https://github.com/szcompressor/cuSZp/blob/master/LICENSE).
 
 ## Acknowledgement
-This research was supported by the Exascale Computing Project (ECP), Project Number: 17-SC-20-SC, a collaborative effort of two DOE organizations – the Office of Science and the National Nuclear Security Administration, responsible for the planning and preparation of a capable exascale ecosystem, including software, applications, hardware, advanced system engineering and early testbed platforms, to support the nation’s exascale computing imperative. The material was supported by the U.S. Department of Energy, Office of Science, Advanced Scientific Computing Research (ASCR), under contract DE-AC02-06CH11357, and supported by the National Science Foundation under Grant OAC-2003709 and OAC-2104023. We acknowledge the computing resources provided on Bebop (operated by Laboratory Computing Resource Center at Argonne) and on Theta and JLSE (operated by Argonne Leadership Computing Facility). We acknowledge the support of ARAMCO. 
+This research was supported by the Exascale Computing Project (ECP), Project Number: 17-SC-20-SC, a collaborative effort of two DOE organizations – the Office of Science and the National Nuclear Security Administration, responsible for the planning and preparation of a capable exascale ecosystem, including software, applications, hardware, advanced system engineering, and early testbed platforms, to support the nation’s exascale computing imperative. The material was supported by the U.S. Department of Energy, Office of Science, Advanced Scientific Computing Research (ASCR), under contract DE-AC02-06CH11357, and supported by the National Science Foundation under Grant OAC-2003709 and OAC-2104023. We acknowledge the computing resources provided on Bebop (operated by Laboratory Computing Resource Center at Argonne) and on Theta and JLSE (operated by Argonne Leadership Computing Facility). We acknowledge the support of ARAMCO. 
