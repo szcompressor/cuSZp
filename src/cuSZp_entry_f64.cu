@@ -15,7 +15,7 @@ void SZp_compress_hostptr_f64(double* oriData, unsigned char* cmpBytes, size_t n
     unsigned int* d_cmpOffset;
     int* d_flag;
     cudaMalloc((void**)&d_oriData, sizeof(double)*pad_nbEle);
-    cudaMemcpy(d_oriData, oriData, sizeof(double)*pad_nbEle, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_oriData, oriData, sizeof(double)*nbEle, cudaMemcpyHostToDevice);
     cudaMalloc((void**)&d_cmpData, sizeof(double)*pad_nbEle);
     cudaMallocManaged((void**)&d_cmpOffset, sizeof(unsigned int)*cmpOffSize);
     cudaMemset(d_cmpOffset, 0, sizeof(unsigned int)*cmpOffSize);
