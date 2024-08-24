@@ -1,8 +1,6 @@
 # cuSZp
 <a href="./LICENSE"><img src="https://img.shields.io/badge/License-BSD%203--Clause-blue.svg"></a> 
 
-**NEWS: cuSZp2 can be currently accessed in [LINK](https://github.com/hyfshishen/SC24-cuSZp2) and will be finally updated to this repository in around Sep. 2024. Thanks for you interests and stay tunned! :)**
-
 cuSZp is a user-friendly error-bounded lossy compression tool specifically designed for the compression of single- and double-precision floating-point data using NVIDIA GPUs. 
 This tool fuses all compression or decompression computations into one single kernel, achieving ultra fast end-to-end throughput.
 Specifically, the cuSZp framework is structured around four pivotal stages: Quantization and Prediction, Fixed-length Encoding, Global Synchronization, and Block Bit-shuffling. 
