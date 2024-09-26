@@ -61,12 +61,11 @@ int main(int argc, char* argv[])
     double* d_oriData;
     double* d_decData;
     unsigned char* d_cmpBytes;
-    size_t pad_nbEle = (nbEle + 262144 - 1) / 262144 * 262144; // A temp demo, will add more block sizes in future implementation.
-    cudaMalloc((void**)&d_oriData, sizeof(double)*pad_nbEle);
-    cudaMemcpy(d_oriData, oriData, sizeof(double)*pad_nbEle, cudaMemcpyHostToDevice);
-    cudaMalloc((void**)&d_decData, sizeof(double)*pad_nbEle);
-    cudaMemset(d_decData, 0, sizeof(double)*pad_nbEle);
-    cudaMalloc((void**)&d_cmpBytes, sizeof(double)*pad_nbEle);
+    cudaMalloc((void**)&d_oriData, sizeof(double)*nbEle);
+    cudaMemcpy(d_oriData, oriData, sizeof(double)*nbEle, cudaMemcpyHostToDevice);
+    cudaMalloc((void**)&d_decData, sizeof(double)*nbEle);
+    cudaMemset(d_decData, 0, sizeof(double)*nbEle);
+    cudaMalloc((void**)&d_cmpBytes, sizeof(double)*nbEle);
 
     // Initializing CUDA Stream.
     cudaStream_t stream;

@@ -50,7 +50,8 @@ __global__ void SZp_compress_kernel_f32(const float* const __restrict__ oriData,
         for(int i=temp_start_idx; i<temp_end_idx; i++)
         {
             quant_chunk_idx = i%cmp_chunk_f32;
-            currQuant = quantization_f32(oriData[i], recipPrecision);
+            if(i<nbEle) currQuant = quantization_f32(oriData[i], recipPrecision);
+            else currQuant = 0;
             lorenQuant = currQuant - prevQuant;
             prevQuant = currQuant;
             sign_ofs = i % 32;
@@ -325,7 +326,7 @@ __global__ void SZp_decompress_kernel_f32(float* const __restrict__ decData, con
                 else
                     lorenQuant = absQuant[i];
                 currQuant = lorenQuant + prevQuant;
-                decData[temp_start_idx+i] = currQuant * eb * 2;
+                if(temp_start_idx+i<nbEle) decData[temp_start_idx+i] = currQuant * eb * 2;
                 prevQuant = currQuant;
             }
         }
