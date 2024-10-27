@@ -74,7 +74,7 @@ cuSZp compression ratio: 22.328032
 
 Pass error check!
 
-$ ./cuSZp -i /xx.f32 -t f32 -m outlier -eb rel 1e-4 
+$ ./cuSZp -i xx.f32 -t f32 -m outlier -eb rel 1e-4 
 cuSZp finished!
 cuSZp compression   end-to-end speed: 341.494199 GB/s
 cuSZp decompression end-to-end speed: 412.994599 GB/s
@@ -207,7 +207,7 @@ compression_time = time.time() - start_time # set cuSZp timer end
 
 This throughput measurement can be shown as below:
 ```shell
-yafan.huang@gpu3$ python example-torch.py 
+$ python example-torch.py 
 Original data size:   4294967296 bytes
 Compressed data size: 971519248 bytes
 Compression Ratio: 4.42
