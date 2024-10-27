@@ -1,5 +1,5 @@
-#ifndef CUSZP_INCLUDE_CUSZP_TIMER_H
-#define CUSZP_INCLUDE_CUSZP_TIMER_H
+#ifndef CUSZP_INCLUDE_CUSZP_CUSZP_TIMER_H
+#define CUSZP_INCLUDE_CUSZP_CUSZP_TIMER_H
 
 #include <cuda.h>
 #include <cuda_runtime.h>
@@ -15,17 +15,12 @@ class TimingGPU
         PrivateTimingGPU *privateTimingGPU;
 
     public:
-
         TimingGPU();
-
         ~TimingGPU();
-
         void StartCounter();
-
         void StartCounterFlags();
-
         float GetCounter();
 
 };
 
-#endif // CUSZP_INCLUDE_CUSZP_TIMER_H
+#endif // CUSZP_INCLUDE_CUSZP_CUSZP_TIMER_H

@@ -1,45 +1,32 @@
 # Find CUDA package
-find_package(CUDA REQUIRED)
+find_package(CUDAToolkit REQUIRED)
 
+# Define the install directory for binaries
 set(install_dir ${PROJECT_BINARY_DIR}/examples/bin)
-set(execName_gpu_f32 "cuSZp_gpu_f32_api")
-set(execName_cpu_f32 "cuSZp_cpu_f32_api")
-set(execName_gpu_f64 "cuSZp_gpu_f64_api")
-set(execName_cpu_f64 "cuSZp_cpu_f64_api")
-set(SRC_DIR ${PROJECT_SOURCE_DIR}/src)
-set(INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
+set(cuSZp "cuSZp")
+set(cuSZp_test_f32 "cuSZp_test_f32")
+set(cuSZp_test_f64 "cuSZp_test_f64")
 
-# Add include and library directories
-include_directories(${INCLUDE_DIR})
+# Include the main include directory
+include_directories(${PROJECT_SOURCE_DIR}/include 
+                    ${CUDAToolkit_INCLUDE_DIRS})
 
-# Compile headers as a library
-cuda_add_library(cuSZp_libs STATIC ${SRC_DIR}/cuSZp_f32.cu
-                                   ${SRC_DIR}/cuSZp_f64.cu 
-                                   ${SRC_DIR}/cuSZp_utility.cu
-                                   ${SRC_DIR}/cuSZp_timer.cu
-                                   ${SRC_DIR}/cuSZp_entry_f32.cu
-                                   ${SRC_DIR}/cuSZp_entry_f64.cu)
+# Compile executable binaries
+add_executable(${cuSZp} cuSZp.cpp)
+add_executable(${cuSZp_test_f32} cuSZp_test_f32.cpp)
+add_executable(${cuSZp_test_f64} cuSZp_test_f64.cpp)
 
-# Compile executable binary
-cuda_add_executable(${execName_gpu_f32} cuSZp_gpu_f32_api.cpp)
-cuda_add_executable(${execName_cpu_f32} cuSZp_cpu_f32_api.cpp)
-cuda_add_executable(${execName_gpu_f64} cuSZp_gpu_f64_api.cpp)
-cuda_add_executable(${execName_cpu_f64} cuSZp_cpu_f64_api.cpp)
-
-# Link with headers
-target_link_libraries(${execName_gpu_f32} cuSZp_libs)
-target_link_libraries(${execName_cpu_f32} cuSZp_libs)
-target_link_libraries(${execName_gpu_f64} cuSZp_libs)
-target_link_libraries(${execName_cpu_f64} cuSZp_libs)
+# Link the existing cuSZp_static library
+target_link_libraries(${cuSZp} PRIVATE cuSZp_static)
+target_link_libraries(${cuSZp_test_f32} PRIVATE cuSZp_static)
+target_link_libraries(${cuSZp_test_f64} PRIVATE cuSZp_static)
 
 # Set output paths for the compiled binary
-set_target_properties(${execName_gpu_f32} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${install_dir})
-set_target_properties(${execName_cpu_f32} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${install_dir})
-set_target_properties(${execName_gpu_f64} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${install_dir})
-set_target_properties(${execName_cpu_f64} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${install_dir})
+set_target_properties(${cuSZp} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${install_dir})
+set_target_properties(${cuSZp_test_f32} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${install_dir})
+set_target_properties(${cuSZp_test_f64} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${install_dir})
 
-# Set installation paths for the compiled binary.
-install(TARGETS ${execName_gpu_f32} DESTINATION bin)
-install(TARGETS ${execName_cpu_f32} DESTINATION bin)
-install(TARGETS ${execName_gpu_f64} DESTINATION bin)
-install(TARGETS ${execName_cpu_f64} DESTINATION bin)
+# Set installation paths for the compiled binary
+install(TARGETS ${cuSZp} DESTINATION bin)
+install(TARGETS ${cuSZp_test_f32} DESTINATION bin)
+install(TARGETS ${cuSZp_test_f64} DESTINATION bin)

@@ -1,6 +1,6 @@
 //
 // Created by Yafan Huang on 5/31/22.
-//     Copied from SZ2, QCAT, and SZx.
+//     Copied from SZ2, QCAT, and SZx (originally developed by Dr. Sheng Di @ ANL).
 //
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,11 +20,9 @@
 #define LITTLE_ENDIAN_SYSTEM 0
 #define QCAT_BUFS 64
 
-
 /*Global Varaibles for Processing Data*/
 int dataEndianType_Yafan = 0;
 int sysEndianType_Yafan = 0; //0 means little endian, 1 means big endian
-
 
 typedef union llfloat
 {
@@ -32,7 +30,6 @@ typedef union llfloat
     unsigned int ivalue;
     unsigned char byte[4];
 } llfloat;
-
 
 typedef union lldouble
 {
@@ -117,7 +114,7 @@ unsigned char *readByteData_Yafan(char *srcFilePath, size_t *byteLength, int *st
         *status = RW_FERR;
         return 0;
     }
-    fread(byteBuf, 1, *byteLength, pFile);
+    size_t bytesRead = fread(byteBuf, 1, *byteLength, pFile); // avoid warnings 1, by yafan.
     fclose(pFile);
     *status = RW_SCES;
     return byteBuf;
@@ -165,7 +162,7 @@ float *readFloatData_systemEndian_Yafan(char *srcFilePath, size_t *nbEle, int *s
         *status = RW_FERR;
         return NULL;
     }
-    fread(daBuf, 4, *nbEle, pFile);
+    size_t floatsRead = fread(daBuf, 4, *nbEle, pFile); // avoid warnings 2, by yafan.
     fclose(pFile);
     *status = RW_SCES;
     return daBuf;
@@ -254,7 +251,7 @@ double *readDoubleData_systemEndian_Yafan(char *srcFilePath, size_t *nbEle, int 
         *status = SZ_FERR;
         return NULL;
     }
-    fread(daBuf, 8, *nbEle, pFile);
+    size_t doublesRead = fread(daBuf, 8, *nbEle, pFile); // avoid warnings 3, by yafan.
     fclose(pFile);
     *status = SZ_SCES;
     return daBuf;

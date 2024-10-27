@@ -1,5 +1,5 @@
-#ifndef CUSZP_INCLUDE_CUSZP_UTILITY_H
-#define CUSZP_INCLUDE_CUSZP_UTILITY_H
+#ifndef CUSZP_INCLUDE_CUSZP_CUSZP_UTILITY_H
+#define CUSZP_INCLUDE_CUSZP_CUSZP_UTILITY_H
 
 void symTransForm_4Bytes(unsigned char data[4]);
 void symTransform_8bytes(unsigned char data[8]);
@@ -15,4 +15,4 @@ double SSIM_3d_calcWindow_float(float* data, float* other, size_t size1, size_t 
 double computeSSIM(float* oriData, float* decData, size_t size2, size_t size1, size_t size0);
 double *computePSNR(size_t nbEle, float *ori_data, float *data);
 
-#endif // CUSZP_INCLUDE_CUSZP_UTILITY_H
+#endif // CUSZP_INCLUDE_CUSZP_CUSZP_UTILITY_H

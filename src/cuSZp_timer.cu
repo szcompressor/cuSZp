@@ -1,9 +1,14 @@
 #include "cuSZp_timer.h"
 
+/** ************************************************************************
+ * @brief           CUDA event timer for measuring GPU kernel execution.
+ * *********************************************************************** */
 TimingGPU::TimingGPU() { privateTimingGPU = new PrivateTimingGPU;  }
-
 TimingGPU::~TimingGPU() { }
 
+/** ************************************************************************
+ * @brief           Start timer.
+ * *********************************************************************** */
 void TimingGPU::StartCounter()
 {
     cudaEventCreate(&((*privateTimingGPU).start));
@@ -11,6 +16,9 @@ void TimingGPU::StartCounter()
     cudaEventRecord((*privateTimingGPU).start,0);
 }
 
+/** ************************************************************************
+ * @brief           Start timer with flags.
+ * *********************************************************************** */
 void TimingGPU::StartCounterFlags()
 {
     int eventflags = cudaEventBlockingSync;
@@ -20,7 +28,9 @@ void TimingGPU::StartCounterFlags()
     cudaEventRecord((*privateTimingGPU).start,0);
 }
 
-// Gets the counter in ms
+/** ************************************************************************
+ * @brief           End timer, get count in ms.
+ * *********************************************************************** */
 float TimingGPU::GetCounter()
 {
     float time;
