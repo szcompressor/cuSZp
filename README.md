@@ -140,7 +140,7 @@ If you want to use cuSZp as a C/C++ interal API, there are two ways.
     #include <cuSZp.h> // Still the only header you need.
 
     // Compression and decompression for float type data array using plain mode.
-    cuSZp_compress_plain_f32(d_oriData, d_cmpBytes, nbEle, cmpSize, errorBound, stream);
+    cuSZp_compress_plain_f32(d_oriData, d_cmpBytes, nbEle, &cmpSize, errorBound, stream);
     cuSZp_decompress_plain_f32(d_decData, d_cmpBytes, nbEle, cmpSize, errorBound, stream);
     // In this case, d_oriData and d_Decdata are float* array on GPU.
     ```
@@ -152,17 +152,17 @@ If you want to use cuSZp as a C/C++ interal API, there are two ways.
     #include <cuSZp.h> // Still the only header you need.
 
     // Compression and decompression for float type data array using outlier mode.
-    cuSZp_compress_outlier_f32(d_oriData, d_cmpBytes, nbEle, cmpSize, errorBound, stream);
+    cuSZp_compress_outlier_f32(d_oriData, d_cmpBytes, nbEle, &cmpSize, errorBound, stream);
     cuSZp_decompress_outlier_f32(d_decData, d_cmpBytes, nbEle, cmpSize, errorBound, stream);
     // In this case, d_oriData and d_Decdata are float* array on GPU.
 
     // Compression and decompression for double type data array using plain mode.
-    cuSZp_compress_plain_f64(d_oriData, d_cmpBytes, nbEle, cmpSize, errorBound, stream);
+    cuSZp_compress_plain_f64(d_oriData, d_cmpBytes, nbEle, &cmpSize, errorBound, stream);
     cuSZp_decompress_plain_f64(d_decData, d_cmpBytes, nbEle, cmpSize, errorBound, stream);
     // In this case, d_oriData and d_Decdata are double* array on GPU.
 
     // Compression and decompression for double type data array using outlier mode.
-    cuSZp_compress_outlier_f64(d_oriData, d_cmpBytes, nbEle, cmpSize, errorBound, stream);
+    cuSZp_compress_outlier_f64(d_oriData, d_cmpBytes, nbEle, &cmpSize, errorBound, stream);
     cuSZp_decompress_outlier_f64(d_decData, d_cmpBytes, nbEle, cmpSize, errorBound, stream);
     // In this case, d_oriData and d_Decdata are double* array on GPU.
     ```
