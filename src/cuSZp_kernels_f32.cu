@@ -56,7 +56,7 @@ __global__ void cuSZp_compress_kernel_outlier_f32(const float* const __restrict_
     unsigned int sign_flag[block_num];
     int sign_ofs;
     int fixed_rate[block_num];
-    unsigned int thread_ofs = 0; // Thread-level prefix-sum, double check for overflow in large data.
+    unsigned int thread_ofs = 0; // Thread-level prefix-sum, double check for overflow in large data (can be resolved by using size_t type).
     float4 tmp_buffer;
     uchar4 tmp_char;
 
@@ -1265,11 +1265,11 @@ __global__ void cuSZp_compress_kernel_plain_f32(const float* const __restrict__ 
     int quant_chunk_idx;
     int block_idx;
     int currQuant, lorenQuant, prevQuant, maxQuant;
-    int absQuant[32];
+    int absQuant[cmp_chunk];
     unsigned int sign_flag[block_num];
     int sign_ofs;
     int fixed_rate[block_num];
-    unsigned int thread_ofs = 0; // Thread-level prefix-sum, double check for overflow in large data.
+    unsigned int thread_ofs = 0; // Thread-level prefix-sum, double check for overflow in large data (can be resolved by using size_t type).
     float4 tmp_buffer;
     uchar4 tmp_char;
 
@@ -1289,7 +1289,7 @@ __global__ void cuSZp_compress_kernel_plain_f32(const float* const __restrict__ 
             for(int i=base_block_start_idx; i<base_block_end_idx; i+=4)
             {
                 tmp_buffer = reinterpret_cast<const float4*>(oriData)[i/4];
-                quant_chunk_idx = i % 32;
+                quant_chunk_idx = j * 32 + i % 32;
 
                 currQuant = quantization(tmp_buffer.x, recipPrecision);
                 lorenQuant = currQuant - prevQuant;
@@ -1328,7 +1328,7 @@ __global__ void cuSZp_compress_kernel_plain_f32(const float* const __restrict__ 
         {
             if(base_block_start_idx >= nbEle)
             {
-                quant_chunk_idx = base_block_start_idx % 32;
+                quant_chunk_idx = j * 32 + base_block_start_idx % 32;
                 for(int i=quant_chunk_idx; i<quant_chunk_idx+32; i++) absQuant[i] = 0;
             }
             else
@@ -1338,7 +1338,7 @@ __global__ void cuSZp_compress_kernel_plain_f32(const float* const __restrict__ 
 
                 for(int i=base_block_start_idx; i<base_block_start_idx+remainbEle; i++)
                 {
-                    quant_chunk_idx = i % 32;
+                    quant_chunk_idx = j * 32 + i % 32;
                     currQuant = quantization(oriData[i], recipPrecision);
                     lorenQuant = currQuant - prevQuant;
                     prevQuant = currQuant;
@@ -1348,7 +1348,7 @@ __global__ void cuSZp_compress_kernel_plain_f32(const float* const __restrict__ 
                     maxQuant = maxQuant > absQuant[quant_chunk_idx] ? maxQuant : absQuant[quant_chunk_idx];
                 }
 
-                quant_chunk_idx = nbEle % 32;
+                quant_chunk_idx = j * 32 + nbEle % 32;
                 for(int i=quant_chunk_idx; i<quant_chunk_idx+zeronbEle; i++) absQuant[i] = 0;
             }  
         }
@@ -1437,6 +1437,8 @@ __global__ void cuSZp_compress_kernel_plain_f32(const float* const __restrict__ 
     unsigned int cur_byte_ofs = 0;
     for(int j=0; j<block_num; j++)
     {
+        int chunk_idx_start = j*32;
+
         tmp_byte_ofs = (fixed_rate[j]) ? (4+fixed_rate[j]*4) : 0;
         #pragma unroll 5
         for(int i=1; i<32; i<<=1)
@@ -1450,65 +1452,6 @@ __global__ void cuSZp_compress_kernel_plain_f32(const float* const __restrict__ 
 
         if(fixed_rate[j])
         {
-            for(int i=0; i<32; i++) absQuant[i] = 0;
-            prevQuant = 0;
-            base_block_start_idx = base_start_idx + j * 1024 + lane * 32;
-            base_block_end_idx = base_block_start_idx + 32;
-            if(base_block_end_idx < nbEle)
-            {
-                for(int i=base_block_start_idx; i<base_block_end_idx; i+=4)
-                {
-                    tmp_buffer = reinterpret_cast<const float4*>(oriData)[i/4];
-                    quant_chunk_idx = i % 32;
-
-                    currQuant = quantization(tmp_buffer.x, recipPrecision);
-                    lorenQuant = currQuant - prevQuant;
-                    prevQuant = currQuant;
-                    absQuant[quant_chunk_idx] = abs(lorenQuant);
-
-                    currQuant = quantization(tmp_buffer.y, recipPrecision);
-                    lorenQuant = currQuant - prevQuant;
-                    prevQuant = currQuant;
-                    absQuant[quant_chunk_idx+1] = abs(lorenQuant);
-
-                    currQuant = quantization(tmp_buffer.z, recipPrecision);
-                    lorenQuant = currQuant - prevQuant;
-                    prevQuant = currQuant;
-                    absQuant[quant_chunk_idx+2] = abs(lorenQuant);
-
-                    // Getting absoluted quantized integer for .w element.
-                    currQuant = quantization(tmp_buffer.w, recipPrecision);
-                    lorenQuant = currQuant - prevQuant;
-                    prevQuant = currQuant;
-                    absQuant[quant_chunk_idx+3] = abs(lorenQuant);
-                }
-            }
-            else
-            {
-                if(base_block_start_idx >= nbEle)
-                {
-                    quant_chunk_idx = base_block_start_idx % 32;
-                    for(int i=quant_chunk_idx; i<quant_chunk_idx+32; i++) absQuant[i] = 0;
-                }
-                else
-                {
-                    int remainbEle = nbEle - base_block_start_idx;
-                    int zeronbEle = base_block_end_idx - nbEle;
-
-                    for(int i=base_block_start_idx; i<base_block_start_idx+remainbEle; i++)
-                    {
-                        quant_chunk_idx = i % 32;
-                        currQuant = quantization(oriData[i], recipPrecision);
-                        lorenQuant = currQuant - prevQuant;
-                        prevQuant = currQuant;
-                        absQuant[quant_chunk_idx] = abs(lorenQuant);
-                    }
-
-                    quant_chunk_idx = nbEle % 32;
-                    for(int i=quant_chunk_idx; i<quant_chunk_idx+zeronbEle; i++) absQuant[i] = 0;
-                }  
-            }
-
             tmp_char.x = 0xff & (sign_flag[j] >> 24);
             tmp_char.y = 0xff & (sign_flag[j] >> 16);
             tmp_char.z = 0xff & (sign_flag[j] >> 8);
@@ -1524,41 +1467,41 @@ __global__ void cuSZp_compress_kernel_plain_f32(const float* const __restrict__ 
                 tmp_char.z = 0;
                 tmp_char.w = 0;
 
-                tmp_char.x = (((absQuant[0] & mask) >> i) << 7) |
-                             (((absQuant[1] & mask) >> i) << 6) |
-                             (((absQuant[2] & mask) >> i) << 5) |
-                             (((absQuant[3] & mask) >> i) << 4) |
-                             (((absQuant[4] & mask) >> i) << 3) |
-                             (((absQuant[5] & mask) >> i) << 2) |
-                             (((absQuant[6] & mask) >> i) << 1) |
-                             (((absQuant[7] & mask) >> i) << 0);
+                tmp_char.x = (((absQuant[chunk_idx_start+0] & mask) >> i) << 7) |
+                             (((absQuant[chunk_idx_start+1] & mask) >> i) << 6) |
+                             (((absQuant[chunk_idx_start+2] & mask) >> i) << 5) |
+                             (((absQuant[chunk_idx_start+3] & mask) >> i) << 4) |
+                             (((absQuant[chunk_idx_start+4] & mask) >> i) << 3) |
+                             (((absQuant[chunk_idx_start+5] & mask) >> i) << 2) |
+                             (((absQuant[chunk_idx_start+6] & mask) >> i) << 1) |
+                             (((absQuant[chunk_idx_start+7] & mask) >> i) << 0);
 
-                tmp_char.y = (((absQuant[8] & mask) >> i) << 7) |
-                             (((absQuant[9] & mask) >> i) << 6) |
-                             (((absQuant[10] & mask) >> i) << 5) |
-                             (((absQuant[11] & mask) >> i) << 4) |
-                             (((absQuant[12] & mask) >> i) << 3) |
-                             (((absQuant[13] & mask) >> i) << 2) |
-                             (((absQuant[14] & mask) >> i) << 1) |
-                             (((absQuant[15] & mask) >> i) << 0);
+                tmp_char.y = (((absQuant[chunk_idx_start+8] & mask) >> i) << 7) |
+                             (((absQuant[chunk_idx_start+9] & mask) >> i) << 6) |
+                             (((absQuant[chunk_idx_start+10] & mask) >> i) << 5) |
+                             (((absQuant[chunk_idx_start+11] & mask) >> i) << 4) |
+                             (((absQuant[chunk_idx_start+12] & mask) >> i) << 3) |
+                             (((absQuant[chunk_idx_start+13] & mask) >> i) << 2) |
+                             (((absQuant[chunk_idx_start+14] & mask) >> i) << 1) |
+                             (((absQuant[chunk_idx_start+15] & mask) >> i) << 0);
 
-                tmp_char.z = (((absQuant[16] & mask) >> i) << 7) |
-                             (((absQuant[17] & mask) >> i) << 6) |
-                             (((absQuant[18] & mask) >> i) << 5) |
-                             (((absQuant[19] & mask) >> i) << 4) |
-                             (((absQuant[20] & mask) >> i) << 3) |
-                             (((absQuant[21] & mask) >> i) << 2) |
-                             (((absQuant[22] & mask) >> i) << 1) |
-                             (((absQuant[23] & mask) >> i) << 0);
+                tmp_char.z = (((absQuant[chunk_idx_start+16] & mask) >> i) << 7) |
+                             (((absQuant[chunk_idx_start+17] & mask) >> i) << 6) |
+                             (((absQuant[chunk_idx_start+18] & mask) >> i) << 5) |
+                             (((absQuant[chunk_idx_start+19] & mask) >> i) << 4) |
+                             (((absQuant[chunk_idx_start+20] & mask) >> i) << 3) |
+                             (((absQuant[chunk_idx_start+21] & mask) >> i) << 2) |
+                             (((absQuant[chunk_idx_start+22] & mask) >> i) << 1) |
+                             (((absQuant[chunk_idx_start+23] & mask) >> i) << 0);
                 
-                tmp_char.w = (((absQuant[24] & mask) >> i) << 7) |
-                             (((absQuant[25] & mask) >> i) << 6) |
-                             (((absQuant[26] & mask) >> i) << 5) |
-                             (((absQuant[27] & mask) >> i) << 4) |
-                             (((absQuant[28] & mask) >> i) << 3) |
-                             (((absQuant[29] & mask) >> i) << 2) |
-                             (((absQuant[30] & mask) >> i) << 1) |
-                             (((absQuant[31] & mask) >> i) << 0);
+                tmp_char.w = (((absQuant[chunk_idx_start+24] & mask) >> i) << 7) |
+                             (((absQuant[chunk_idx_start+25] & mask) >> i) << 6) |
+                             (((absQuant[chunk_idx_start+26] & mask) >> i) << 5) |
+                             (((absQuant[chunk_idx_start+27] & mask) >> i) << 4) |
+                             (((absQuant[chunk_idx_start+28] & mask) >> i) << 3) |
+                             (((absQuant[chunk_idx_start+29] & mask) >> i) << 2) |
+                             (((absQuant[chunk_idx_start+30] & mask) >> i) << 1) |
+                             (((absQuant[chunk_idx_start+31] & mask) >> i) << 0);
 
                 reinterpret_cast<uchar4*>(cmpData)[cmp_byte_ofs/4] = tmp_char;
                 cmp_byte_ofs+=4;

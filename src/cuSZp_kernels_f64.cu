@@ -41,7 +41,7 @@ __global__ void cuSZp_compress_kernel_outlier_f64(const double* const __restrict
     unsigned int sign_flag[block_num];
     int sign_ofs;
     int fixed_rate[block_num];
-    unsigned int thread_ofs = 0; // Thread-level prefix-sum, double check for overflow in large data.
+    unsigned int thread_ofs = 0; // Thread-level prefix-sum, double check for overflow in large data (can be resolved by using size_t type).
     double4 tmp_buffer;
     uchar4 tmp_char;
 
@@ -1254,7 +1254,7 @@ __global__ void cuSZp_compress_kernel_plain_f64(const double* const __restrict__
     unsigned int sign_flag[block_num];
     int sign_ofs;
     int fixed_rate[block_num];
-    unsigned int thread_ofs = 0; // Thread-level prefix-sum, double check for overflow in large data.
+    unsigned int thread_ofs = 0; // Thread-level prefix-sum, double check for overflow in large data (can be resolved by using size_t type).
     double4 tmp_buffer;
     uchar4 tmp_char;
 
