@@ -1,6 +1,8 @@
 #ifndef CUSZP_H
 #define CUSZP_H
 
+#include <cuda_runtime.h>
+#include <cstddef>
 #include "cuSZp/cuSZp_utility.h"
 #include "cuSZp/cuSZp_timer.h"
 #include "cuSZp/cuSZp_entry_f32.h"

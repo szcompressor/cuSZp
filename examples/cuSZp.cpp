@@ -14,7 +14,7 @@ int main(int argc, char* argv[])
     char decFilePath[640] = {0};
     cuszp_type_t dataType;
     cuszp_mode_t encodingMode;
-    char errorBoundMode[4];
+    char errorBoundMode[4] = {0};
     float errorBound = 0.0;
 
     // Check if there are enough arguments
