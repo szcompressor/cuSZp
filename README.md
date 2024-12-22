@@ -250,7 +250,7 @@ If you find cuSZp is useful, following two papers can be considered for citing.
     }
     ```
 
-The **[SC'23]** paper proposes the cuSZp compression framework with kernel fusion, while the **[SC'24]** paper includes new lossless encoding modes and several performance optimization.
+The **[SC'23]** paper proposes the cuSZp compression framework with kernel fusion (a.k.a. cuSZp1, code see [Release](https://github.com/szcompressor/cuSZp/releases/tag/cuSZp-V1.1) or [Commit](https://github.com/szcompressor/cuSZp/tree/f4df2f1c5e9e529b05d344f2491a3fa7a5c2c0ed)), while the **[SC'24]** paper includes new lossless encoding modes and several performance optimization (a.k.a. cuSZp2, code see [Release](https://github.com/szcompressor/cuSZp/releases/tag/cuSZp-V2.0) or [Commit](https://github.com/szcompressor/cuSZp/tree/16e164762fe67785f498a44bae7984058a7a6952)). 
 
 ## Copyright
 (C) 2023 by Argonne National Laboratory and University of Iowa. For more details see [COPYRIGHT](https://github.com/szcompressor/cuSZp/blob/master/LICENSE).
