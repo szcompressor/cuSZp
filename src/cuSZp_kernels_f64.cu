@@ -32,6 +32,12 @@ __global__ void cuSZp_compress_kernel_outlier_f64(const double* const __restrict
     const int rate_ofs = (nbEle+cmp_tblock_size*cmp_chunk-1)/(cmp_tblock_size*cmp_chunk)*(cmp_tblock_size*cmp_chunk)/32;
     const double recipPrecision = 0.5f/eb;
 
+    if (!tid) {
+        excl_sum = 0;
+        base_idx = 0;
+    }
+    __syncthreads();
+
     int base_start_idx;
     int base_block_start_idx, base_block_end_idx;
     int quant_chunk_idx;
@@ -653,6 +659,12 @@ __global__ void cuSZp_decompress_kernel_outlier_f64(double* const __restrict__ d
     const int block_num = dec_chunk >> 5;
     const int rate_ofs = (nbEle+dec_tblock_size*dec_chunk-1)/(dec_tblock_size*dec_chunk)*(dec_tblock_size*dec_chunk)/32;
 
+    if (!tid) {
+        excl_sum = 0;
+        base_idx = 0;
+    }
+    __syncthreads();
+
     int base_start_idx;
     int base_block_start_idx, base_block_end_idx;
     int block_idx;    
@@ -1245,6 +1257,12 @@ __global__ void cuSZp_compress_kernel_plain_f64(const double* const __restrict__
     const int rate_ofs = (nbEle+cmp_tblock_size*cmp_chunk-1)/(cmp_tblock_size*cmp_chunk)*(cmp_tblock_size*cmp_chunk)/32;
     const double recipPrecision = 0.5f/eb;
 
+    if (!tid) {
+        excl_sum = 0;
+        base_idx = 0;
+    }
+    __syncthreads();
+
     int base_start_idx;
     int base_block_start_idx, base_block_end_idx;
     int quant_chunk_idx;
@@ -1516,6 +1534,12 @@ __global__ void cuSZp_decompress_kernel_plain_f64(double* const __restrict__ dec
     const int warp = idx >> 5;
     const int block_num = dec_chunk >> 5;
     const int rate_ofs = (nbEle+dec_tblock_size*dec_chunk-1)/(dec_tblock_size*dec_chunk)*(dec_tblock_size*dec_chunk)/32;
+
+    if (!tid) {
+        excl_sum = 0;
+        base_idx = 0;
+    }
+    __syncthreads();
 
     int base_start_idx;
     int base_block_start_idx, base_block_end_idx;
