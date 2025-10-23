@@ -12,7 +12,7 @@ cuSZp is an ultra-fast and user-friendly GPU error-bounded lossy compressor for 
 4. Executable binary, C/C++ API, Python API are provided.
 
 ## Documentation
-A detailed documentation for cuSZp usages can be found [here]().
+A detailed documentation for cuSZp usages can be found [here](https://cuszp-documentation.readthedocs.io/en/latest/).
 
 ## Environment Requirements
 - Linux OS with NVIDIA GPUs
