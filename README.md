@@ -4,8 +4,11 @@
 cuSZp is an ultra-fast and user-friendly GPU error-bounded lossy compressor for floating-point data array (both single- and double-precision). In short, cuSZp has several key features:
 
 1. Fusing entire compression/decompression phase into **one CUDA kernel function**.
-2. Efficient latency control and memory access -- targeting **ultra-fast end-to-end throughput**.
-3. Two encoding modes (plain or outlier modes) supported, **high compression ratio** for different data patterns. In general, if your dataset is sparse (consisting lots of 0s) -- plain mode will be a good choice; if your dataset exhibits non-sparse and high smoothness -- outlier mode will be a good choice.
+2. Various system-level optimizations -- targeting **ultra-fast end-to-end throughput** (~300 GB/s on A100).
+3. Dimensionality (1D, 2D, and 3D) and three encoding modes (fixed, plain, or outlier modes) supported, **high compression ratio** for different data patterns.
+    - *fixed*: Only fixed-length encoding is used. This mode is designed for compressing unsmooth and non-structured scientific data or machine learning weights/tokens.
+    - *plain*: Dimension-aware delta encoding + fixed-length encoding. This mode is designed for scientfic datasets with only local smoothness or sparse (containing lots of 0s).
+    - *outlier*: Dimension-aware delta encoding + fixed-length encoding + outlier preservation. This mode is designed for non-sparse and globally smooth scientific datasets. Always highest ratios.
 4. Executable binary, C/C++ API, Python API are provided.
 
 
@@ -196,6 +199,7 @@ If you want to use cuSZp as a C/C++ interal API, there are two ways.
 
 
 ### Using cuSZp as Python API
+(to yafan: will be updated with higher-dim tests)
 cuSZp also supports Python bindings for fast compression on GPU array.
 Examples can be found in ```cuSZp/python/```. 
 The required Python packages include ```ctypes, numpy, pycuda```. ```pytorch``` is optional unless you want to use cuSZp compress a ```torch``` tensor.
