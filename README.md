@@ -6,7 +6,7 @@ cuSZp is an ultra-fast and user-friendly GPU error-bounded lossy compressor for 
 
 1. Fusing entire compression/decompression phase into **one CUDA kernel function**.
 2. Various system-level optimizations -- targeting **ultra-fast end-to-end throughput** (~300 GB/s on A100).
-3. Dimensionality (1D, 2D, and 3D) and three encoding modes (fixed, plain, or outlier modes) supported, **high compression ratio** for different data patterns.
+3. Dimensionality (1D, 2D, and 3D) and three encoding modes (fixed, plain, or outlier modes) supported, ensuring **high compression ratio** for different data patterns.
     - *fixed*: Only fixed-length encoding is used. This mode is designed for compressing unsmooth and non-structured scientific data or machine learning weights/tokens.
     - *plain*: Dimension-aware delta encoding + fixed-length encoding. This mode is designed for scientfic datasets with only local smoothness or just sparse (containing lots of 0s).
     - *outlier*: Dimension-aware delta encoding + fixed-length encoding + outlier preservation. This mode is designed for non-sparse and globally smooth scientific datasets. Always highest compression ratios.
@@ -302,7 +302,7 @@ If you find cuSZp is useful, following papers can be considered for citing.
 The **[SC'23]** paper proposes the cuSZp compression framework with kernel fusion (a.k.a. cuSZp1, code see [Release](https://github.com/szcompressor/cuSZp/releases/tag/cuSZp-V1.1) or [Commit](https://github.com/szcompressor/cuSZp/tree/f4df2f1c5e9e529b05d344f2491a3fa7a5c2c0ed)). 
 The **[SC'24]** paper includes new lossless encoding modes and several performance optimization (a.k.a. cuSZp2, code see [Release](https://github.com/szcompressor/cuSZp/releases/tag/cuSZp-V2.0) or [Commit](https://github.com/szcompressor/cuSZp/tree/16e164762fe67785f498a44bae7984058a7a6952)). 
 The **[SC'25]** paper includes dimensionality support (1D, 2D, 3D data with 3 compression mode for each) and versatility support. (a.k.a. cuSZp3, code see [Release]() or [Commit]()). 
-The **[ICS'25]** paper includes a fast and high-ratio AaTrox mode for 1D processing manner.
+The **[ICS'25]** paper includes a fast and high-ratio AaTrox mode for 1D processing manner (to be updated later).
 
 ## Copyright
 (C) 2023 by Argonne National Laboratory and University of Iowa. For more details see [COPYRIGHT](https://github.com/szcompressor/cuSZp/blob/master/LICENSE).
