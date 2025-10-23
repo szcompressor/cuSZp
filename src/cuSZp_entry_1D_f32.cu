@@ -1,5 +1,5 @@
-#include "cuSZp_entry_f32.h"
-#include "cuSZp_kernels_f32.h"
+#include "cuSZp_entry_1D_f32.h"
+#include "cuSZp_kernels_1D_f32.h"
 
 /** ************************************************************************
  * @brief cuSZp end-to-end compression API for device pointers
@@ -14,11 +14,11 @@
  * @param   errorBound      user-defined error bound
  * @param   stream          CUDA stream for executing compression kernel
  * *********************************************************************** */
-void cuSZp_compress_plain_f32(float* d_oriData, unsigned char* d_cmpBytes, size_t nbEle, size_t* cmpSize, float errorBound, cudaStream_t stream)
+void cuSZp_compress_1D_plain_f32(float* d_oriData, unsigned char* d_cmpBytes, size_t nbEle, size_t* cmpSize, float errorBound, cudaStream_t stream)
 {
     // Data blocking.
-    int bsize = cmp_tblock_size;
-    int gsize = (nbEle + bsize * cmp_chunk - 1) / (bsize * cmp_chunk);
+    int bsize = tblock_size;
+    int gsize = (nbEle + bsize * thread_chunk - 1) / (bsize * thread_chunk);
     int cmpOffSize = gsize + 1;
 
     // Initializing global memory for GPU compression.
@@ -36,11 +36,11 @@ void cuSZp_compress_plain_f32(float* d_oriData, unsigned char* d_cmpBytes, size_
     // cuSZp GPU compression.
     dim3 blockSize(bsize);
     dim3 gridSize(gsize);
-    cuSZp_compress_kernel_plain_f32<<<gridSize, blockSize, sizeof(unsigned int)*2, stream>>>(d_oriData, d_cmpBytes, d_cmpOffset, d_locOffset, d_flag, errorBound, nbEle);
+    cuSZp_compress_kernel_1D_plain_f32<<<gridSize, blockSize, sizeof(unsigned int)*2, stream>>>(d_oriData, d_cmpBytes, d_cmpOffset, d_locOffset, d_flag, errorBound, nbEle);
 
     // Obtain compression ratio and move data back to CPU.  
     cudaMemcpy(&glob_sync, d_cmpOffset+cmpOffSize-1, sizeof(unsigned int), cudaMemcpyDeviceToHost);
-    *cmpSize = (size_t)glob_sync + (nbEle+cmp_tblock_size*cmp_chunk-1)/(cmp_tblock_size*cmp_chunk)*(cmp_tblock_size*cmp_chunk)/32;
+    *cmpSize = (size_t)glob_sync + (nbEle+tblock_size*thread_chunk-1)/(tblock_size*thread_chunk)*(tblock_size*thread_chunk)/32;
 
     // Free memory that is used.
     cudaFree(d_cmpOffset);
@@ -62,11 +62,11 @@ void cuSZp_compress_plain_f32(float* d_oriData, unsigned char* d_cmpBytes, size_
  * @param   errorBound      user-defined error bound
  * @param   stream          CUDA stream for executing compression kernel
  * *********************************************************************** */
-void cuSZp_decompress_plain_f32(float* d_decData, unsigned char* d_cmpBytes, size_t nbEle, size_t cmpSize, float errorBound, cudaStream_t stream)
+void cuSZp_decompress_1D_plain_f32(float* d_decData, unsigned char* d_cmpBytes, size_t nbEle, size_t cmpSize, float errorBound, cudaStream_t stream)
 {
     // Data blocking.
-    int bsize = dec_tblock_size;
-    int gsize = (nbEle + bsize * dec_chunk - 1) / (bsize * dec_chunk);
+    int bsize = tblock_size;
+    int gsize = (nbEle + bsize * thread_chunk - 1) / (bsize * thread_chunk);
     int cmpOffSize = gsize + 1;
 
     // Initializing global memory for GPU decompression.
@@ -83,7 +83,7 @@ void cuSZp_decompress_plain_f32(float* d_decData, unsigned char* d_cmpBytes, siz
     // cuSZp GPU decompression.
     dim3 blockSize(bsize);
     dim3 gridSize(gsize);
-    cuSZp_decompress_kernel_plain_f32<<<gridSize, blockSize, sizeof(unsigned int)*2, stream>>>(d_decData, d_cmpBytes, d_cmpOffset, d_locOffset, d_flag, errorBound, nbEle);
+    cuSZp_decompress_kernel_1D_plain_f32<<<gridSize, blockSize, sizeof(unsigned int)*2, stream>>>(d_decData, d_cmpBytes, d_cmpOffset, d_locOffset, d_flag, errorBound, nbEle);
     
     // Free memory that is used.
     cudaFree(d_cmpOffset);
@@ -104,11 +104,11 @@ void cuSZp_decompress_plain_f32(float* d_decData, unsigned char* d_cmpBytes, siz
  * @param   errorBound      user-defined error bound
  * @param   stream          CUDA stream for executing compression kernel
  * *********************************************************************** */
-void cuSZp_compress_outlier_f32(float* d_oriData, unsigned char* d_cmpBytes, size_t nbEle, size_t* cmpSize, float errorBound, cudaStream_t stream)
+void cuSZp_compress_1D_outlier_f32(float* d_oriData, unsigned char* d_cmpBytes, size_t nbEle, size_t* cmpSize, float errorBound, cudaStream_t stream)
 {
     // Data blocking.
-    int bsize = cmp_tblock_size;
-    int gsize = (nbEle + bsize * cmp_chunk - 1) / (bsize * cmp_chunk);
+    int bsize = tblock_size;
+    int gsize = (nbEle + bsize * thread_chunk - 1) / (bsize * thread_chunk);
     int cmpOffSize = gsize + 1;
 
     // Initializing global memory for GPU compression.
@@ -126,11 +126,11 @@ void cuSZp_compress_outlier_f32(float* d_oriData, unsigned char* d_cmpBytes, siz
     // cuSZp GPU compression.
     dim3 blockSize(bsize);
     dim3 gridSize(gsize);
-    cuSZp_compress_kernel_outlier_f32<<<gridSize, blockSize, sizeof(unsigned int)*2, stream>>>(d_oriData, d_cmpBytes, d_cmpOffset, d_locOffset, d_flag, errorBound, nbEle);
+    cuSZp_compress_kernel_1D_outlier_f32<<<gridSize, blockSize, sizeof(unsigned int)*2, stream>>>(d_oriData, d_cmpBytes, d_cmpOffset, d_locOffset, d_flag, errorBound, nbEle);
 
     // Obtain compression ratio and move data back to CPU.  
     cudaMemcpy(&glob_sync, d_cmpOffset+cmpOffSize-1, sizeof(unsigned int), cudaMemcpyDeviceToHost);
-    *cmpSize = (size_t)glob_sync + (nbEle+cmp_tblock_size*cmp_chunk-1)/(cmp_tblock_size*cmp_chunk)*(cmp_tblock_size*cmp_chunk)/32;
+    *cmpSize = (size_t)glob_sync + (nbEle+tblock_size*thread_chunk-1)/(tblock_size*thread_chunk)*(tblock_size*thread_chunk)/32;
 
     // Free memory that is used.
     cudaFree(d_cmpOffset);
@@ -152,11 +152,11 @@ void cuSZp_compress_outlier_f32(float* d_oriData, unsigned char* d_cmpBytes, siz
  * @param   errorBound      user-defined error bound
  * @param   stream          CUDA stream for executing compression kernel
  * *********************************************************************** */
-void cuSZp_decompress_outlier_f32(float* d_decData, unsigned char* d_cmpBytes, size_t nbEle, size_t cmpSize, float errorBound, cudaStream_t stream)
+void cuSZp_decompress_1D_outlier_f32(float* d_decData, unsigned char* d_cmpBytes, size_t nbEle, size_t cmpSize, float errorBound, cudaStream_t stream)
 {
     // Data blocking.
-    int bsize = dec_tblock_size;
-    int gsize = (nbEle + bsize * dec_chunk - 1) / (bsize * dec_chunk);
+    int bsize = tblock_size;
+    int gsize = (nbEle + bsize * thread_chunk - 1) / (bsize * thread_chunk);
     int cmpOffSize = gsize + 1;
 
     // Initializing global memory for GPU decompression.
@@ -173,7 +173,7 @@ void cuSZp_decompress_outlier_f32(float* d_decData, unsigned char* d_cmpBytes, s
     // cuSZp GPU decompression.
     dim3 blockSize(bsize);
     dim3 gridSize(gsize);
-    cuSZp_decompress_kernel_outlier_f32<<<gridSize, blockSize, sizeof(unsigned int)*2, stream>>>(d_decData, d_cmpBytes, d_cmpOffset, d_locOffset, d_flag, errorBound, nbEle);
+    cuSZp_decompress_kernel_1D_outlier_f32<<<gridSize, blockSize, sizeof(unsigned int)*2, stream>>>(d_decData, d_cmpBytes, d_cmpOffset, d_locOffset, d_flag, errorBound, nbEle);
     
     // Free memory that is used.
     cudaFree(d_cmpOffset);

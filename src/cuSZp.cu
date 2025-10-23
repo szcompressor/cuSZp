@@ -5,10 +5,10 @@ void cuSZp_compress(void* d_oriData, unsigned char* d_cmpBytes, size_t nbEle, si
 {
     if (type == CUSZP_TYPE_FLOAT) {
         if (mode == CUSZP_MODE_PLAIN) {
-            cuSZp_compress_plain_f32((float*)d_oriData, d_cmpBytes, nbEle, cmpSize, errorBound, stream);
+            cuSZp_compress_1D_plain_f32((float*)d_oriData, d_cmpBytes, nbEle, cmpSize, errorBound, stream);
         } 
         else if (mode == CUSZP_MODE_OUTLIER) {
-            cuSZp_compress_outlier_f32((float*)d_oriData, d_cmpBytes, nbEle, cmpSize, errorBound, stream);
+            cuSZp_compress_1D_outlier_f32((float*)d_oriData, d_cmpBytes, nbEle, cmpSize, errorBound, stream);
         }
         else {
             printf("Unsupported mode in cuSZp.\n");
@@ -17,10 +17,10 @@ void cuSZp_compress(void* d_oriData, unsigned char* d_cmpBytes, size_t nbEle, si
     else if (type == CUSZP_TYPE_DOUBLE) {
         double errorBound_f64 = (double)errorBound;
         if (mode == CUSZP_MODE_PLAIN) {
-            cuSZp_compress_plain_f64((double*)d_oriData, d_cmpBytes, nbEle, cmpSize, errorBound_f64, stream);
+            cuSZp_compress_1D_plain_f64((double*)d_oriData, d_cmpBytes, nbEle, cmpSize, errorBound_f64, stream);
         } 
         else if (mode == CUSZP_MODE_OUTLIER) {
-            cuSZp_compress_outlier_f64((double*)d_oriData, d_cmpBytes, nbEle, cmpSize, errorBound_f64, stream);
+            cuSZp_compress_1D_outlier_f64((double*)d_oriData, d_cmpBytes, nbEle, cmpSize, errorBound_f64, stream);
         }
         else{
             printf("Unsupported mode in cuSZp.\n");
@@ -36,10 +36,10 @@ void cuSZp_decompress(void* d_decData, unsigned char* d_cmpBytes, size_t nbEle, 
 {
     if (type == CUSZP_TYPE_FLOAT) {
         if (mode == CUSZP_MODE_PLAIN) {
-            cuSZp_decompress_plain_f32((float*)d_decData, d_cmpBytes, nbEle, cmpSize, errorBound, stream);
+            cuSZp_decompress_1D_plain_f32((float*)d_decData, d_cmpBytes, nbEle, cmpSize, errorBound, stream);
         } 
         else if (mode == CUSZP_MODE_OUTLIER) {
-            cuSZp_decompress_outlier_f32((float*)d_decData, d_cmpBytes, nbEle, cmpSize, errorBound, stream);
+            cuSZp_decompress_1D_outlier_f32((float*)d_decData, d_cmpBytes, nbEle, cmpSize, errorBound, stream);
         }
         else {
             printf("Unsupported mode in cuSZp.\n");
@@ -48,10 +48,10 @@ void cuSZp_decompress(void* d_decData, unsigned char* d_cmpBytes, size_t nbEle, 
     else if (type == CUSZP_TYPE_DOUBLE) {
         double errorBound_f64 = (double)errorBound;
         if (mode == CUSZP_MODE_PLAIN) {
-            cuSZp_decompress_plain_f64((double*)d_decData, d_cmpBytes, nbEle, cmpSize, errorBound_f64, stream);
+            cuSZp_decompress_1D_plain_f64((double*)d_decData, d_cmpBytes, nbEle, cmpSize, errorBound_f64, stream);
         } 
         else if (mode == CUSZP_MODE_OUTLIER) {
-            cuSZp_decompress_outlier_f64((double*)d_decData, d_cmpBytes, nbEle, cmpSize, errorBound_f64, stream);
+            cuSZp_decompress_1D_outlier_f64((double*)d_decData, d_cmpBytes, nbEle, cmpSize, errorBound_f64, stream);
         }
         else {
             printf("Unsupported mode in cuSZp.\n");

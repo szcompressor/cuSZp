@@ -4,7 +4,6 @@
 //
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <math.h>
 #include <string.h>
 #include "cuSZp_utility.h"
@@ -38,11 +37,38 @@ typedef union lldouble
     unsigned char byte[8];
 } lldouble;
 
+typedef union lint16
+{
+	unsigned short usvalue;
+	short svalue;
+	unsigned char byte[2];
+} lint16;
+
+typedef union lint32
+{
+	int ivalue;
+	unsigned int uivalue;
+	unsigned char byte[4];
+} lint32;
+
 
 /** ************************************************************************
- * @brief Reverse 4-bit-length unsigned char array.
+ * @brief Reverse 2-byte-length unsigned char array.
  * 
- * @param   data[4]         4-bit-length unsigned char array.
+ * @param   data[2]         2-byte-length unsigned char array.
+ * *********************************************************************** */
+void symTransform_2bytes(unsigned char data[2])
+{
+	unsigned char tmp = data[0];
+	data[0] = data[1];
+	data[1] = tmp;
+}
+
+
+/** ************************************************************************
+ * @brief Reverse 4-byte-length unsigned char array.
+ * 
+ * @param   data[4]         4-byte-length unsigned char array.
  * *********************************************************************** */
 void symTransForm_4Bytes(unsigned char data[4])
 {
@@ -57,9 +83,9 @@ void symTransForm_4Bytes(unsigned char data[4])
 
 
 /** ************************************************************************
- * @brief Reverse 8-bit-length unsigned char array.
+ * @brief Reverse 8-byte-length unsigned char array.
  * 
- * @param   data[8]         8-bit-length unsigned char array.
+ * @param   data[8]         8-byte-length unsigned char array.
  * *********************************************************************** */
 void symTransform_8bytes(unsigned char data[8])
 {
@@ -78,6 +104,83 @@ void symTransform_8bytes(unsigned char data[8])
 	tmp = data[3];
 	data[3] = data[4];
 	data[4] = tmp;
+}
+
+
+/** ************************************************************************
+ * @brief Convert an array of unsigned short integers to a byte array.
+ *        Handles endianness to ensure correct byte order conversion.
+ *        Typically used for preparing `unsigned short int` data for serialization
+ *        or transmission in a byte-oriented format.
+ * 
+ * @param   states          input array of unsigned short integers to be converted
+ * @param   stateLength     the length of the `states` array
+ * @param   bytes           output byte array to store the converted data
+ * *********************************************************************** */
+void convertUShortArrayToBytes(unsigned short* states, size_t stateLength, unsigned char* bytes)
+{
+    lint16 ls;
+    size_t i;
+    if(sysEndianType_Yafan==dataEndianType_Yafan)
+    {
+        for(i=0;i<stateLength;i++)
+        {
+            ls.usvalue = states[i];
+            bytes[i*2] = ls.byte[0];
+            bytes[i*2+1] = ls.byte[1];
+        }		
+    }
+    else
+    {
+        for(i=0;i<stateLength;i++)
+        {
+            ls.usvalue = states[i];
+            bytes[i*2] = ls.byte[1];
+            bytes[i*2+1] = ls.byte[0];
+        }			
+    }
+}
+
+
+/** ************************************************************************
+ * @brief Convert an array of unsigned integers to a byte array.
+ *        Handles endianness to ensure correct byte order conversion.
+ *        Typically used for preparing `unsigned int` data for serialization
+ *        or transmission in a byte-oriented format.
+ * 
+ * @param   states          input array of unsigned integers to be converted
+ * @param   stateLength     the length of the `states` array
+ * @param   bytes           output byte array to store the converted data
+ * *********************************************************************** */
+void convertUIntArrayToBytes(unsigned int* states, size_t stateLength, unsigned char* bytes)
+{
+    lint32 ls;
+    size_t index = 0;
+    size_t i;
+    if(sysEndianType_Yafan==dataEndianType_Yafan)
+    {
+        for(i=0;i<stateLength;i++)
+        {
+            index = i << 2; //==i*4
+            ls.uivalue = states[i];
+            bytes[index] = ls.byte[0];
+            bytes[index+1] = ls.byte[1];
+            bytes[index+2] = ls.byte[2];
+            bytes[index+3] = ls.byte[3];
+        }		
+    }
+    else
+    {
+        for(i=0;i<stateLength;i++)
+        {
+            index = i << 2; //==i*4
+            ls.uivalue = states[i];
+            bytes[index] = ls.byte[3];
+            bytes[index+1] = ls.byte[2];
+            bytes[index+2] = ls.byte[1];
+            bytes[index+3] = ls.byte[0];
+        }			
+    }
 }
 
 
@@ -118,6 +221,198 @@ unsigned char *readByteData_Yafan(char *srcFilePath, size_t *byteLength, int *st
     fclose(pFile);
     *status = RW_SCES;
     return byteBuf;
+}
+
+
+/** ************************************************************************
+ * @brief Read uint16 data from path to source binary format file in endian systems.
+ *        Usually used for compressing data from input file.
+ *        Variables nbEle and status can be obtained through this function. 
+ * 
+ * @param   srcFilePath     input source file path
+ * @param   nbEle           the length of uint16 array
+ * @param   status          data processing states (macro definitions) 
+ * 
+ * @return  daBuf           uint16 array with length nbEle
+ * *********************************************************************** */
+uint16_t *readUInt16Data_systemEndian_Yafan(char *srcFilePath, size_t *nbEle, int *status)
+{
+	size_t inSize;
+	FILE *pFile = fopen(srcFilePath, "rb");
+	if (pFile == NULL)
+	{
+		printf("Failed to open input file. 1\n");
+		*status = SZ_FERR;
+		return NULL;
+	}
+	fseek(pFile, 0, SEEK_END);
+	inSize = ftell(pFile);
+	*nbEle = inSize/2;
+	fclose(pFile);
+
+	if(inSize<=0)
+	{
+		printf("Error: input file is wrong!\n");
+		*status = SZ_FERR;
+	}
+
+	uint16_t *daBuf = (uint16_t *)malloc(inSize);
+
+	pFile = fopen(srcFilePath, "rb");
+	if (pFile == NULL)
+	{
+		printf("Failed to open input file. 2\n");
+		*status = SZ_FERR;
+		return NULL;
+	}
+	size_t uint16sRead = fread(daBuf, 2, *nbEle, pFile);
+	fclose(pFile);
+	*status = SZ_SCES;
+	return daBuf;
+}
+
+
+/** ************************************************************************
+ * @brief Read uint16 data from path to source binary format file.
+ *        Usually used for compressing data from input file.
+ *        Variables nbEle and status can be obtained through this function. 
+ * 
+ * @param   srcFilePath     input source file path
+ * @param   nbEle           the length of uint16 array
+ * @param   status          data processing states (macro definitions) 
+ * 
+ * @return  daBuf           uint16 array with length nbEle
+ * *********************************************************************** */
+uint16_t *readUInt16Data_Yafan(char *srcFilePath, size_t *nbEle, int *status)
+{
+	int state = SZ_SCES;
+	if(dataEndianType_Yafan==sysEndianType_Yafan)
+	{
+		uint16_t *daBuf = readUInt16Data_systemEndian_Yafan(srcFilePath, nbEle, &state);
+		*status = state;
+		return daBuf;
+	}
+	else
+	{
+		size_t i,j;
+
+		size_t byteLength;
+		unsigned char* bytes = readByteData_Yafan(srcFilePath, &byteLength, &state);
+		if(state == SZ_FERR)
+		{
+			*status = SZ_FERR;
+			return NULL;
+		}
+		uint16_t *daBuf = (uint16_t *)malloc(byteLength);
+		*nbEle = byteLength/2;
+
+		lint16 buf;
+		for(i = 0;i<*nbEle;i++)
+		{
+			j = i << 1;//*2
+			memcpy(buf.byte, bytes+j, 2);
+			symTransform_2bytes(buf.byte);
+			daBuf[i] = buf.usvalue;
+		}
+		free(bytes);
+		return daBuf;
+	}
+}
+
+
+/** ************************************************************************
+ * @brief Read uint32 data from path to source binary format file in endian systems.
+ *        Usually used for compressing data from input file.
+ *        Variables nbEle and status can be obtained through this function. 
+ * 
+ * @param   srcFilePath     input source file path
+ * @param   nbEle           the length of uint32 array
+ * @param   status          data processing states (macro definitions) 
+ * 
+ * @return  daBuf           uint32 array with length nbEle
+ * *********************************************************************** */
+uint32_t *readUInt32Data_systemEndian_Yafan(char *srcFilePath, size_t *nbEle, int *status)
+{
+	size_t inSize;
+	FILE *pFile = fopen(srcFilePath, "rb");
+	if (pFile == NULL)
+	{
+		printf("Failed to open input file. 1\n");
+		*status = SZ_FERR;
+		return NULL;
+	}
+	fseek(pFile, 0, SEEK_END);
+	inSize = ftell(pFile);
+	*nbEle = inSize/4;
+	fclose(pFile);
+
+	if(inSize<=0)
+	{
+		printf("Error: input file is wrong!\n");
+		*status = SZ_FERR;
+	}
+
+	uint32_t *daBuf = (uint32_t *)malloc(inSize);
+
+	pFile = fopen(srcFilePath, "rb");
+	if (pFile == NULL)
+	{
+		printf("Failed to open input file. 2\n");
+		*status = SZ_FERR;
+		return NULL;
+	}
+	size_t uint32sRead = fread(daBuf, 4, *nbEle, pFile);
+	fclose(pFile);
+	*status = SZ_SCES;
+	return daBuf;
+}
+
+
+/** ************************************************************************
+ * @brief Read uint32 data from path to source binary format file.
+ *        Usually used for compressing data from input file.
+ *        Variables nbEle and status can be obtained through this function. 
+ * 
+ * @param   srcFilePath     input source file path
+ * @param   nbEle           the length of uint32 array
+ * @param   status          data processing states (macro definitions) 
+ * 
+ * @return  daBuf           uint32 array with length nbEle
+ * *********************************************************************** */
+uint32_t *readUInt32Data_Yafan(char *srcFilePath, size_t *nbEle, int *status)
+{
+	int state = SZ_SCES;
+	if(dataEndianType_Yafan==sysEndianType_Yafan)
+	{
+		uint32_t *daBuf = readUInt32Data_systemEndian_Yafan(srcFilePath, nbEle, &state);
+		*status = state;
+		return daBuf;
+	}
+	else
+	{
+		size_t i,j;
+
+		size_t byteLength;
+		unsigned char* bytes = readByteData_Yafan(srcFilePath, &byteLength, &state);
+		if(state == SZ_FERR)
+		{
+			*status = SZ_FERR;
+			return NULL;
+		}
+		uint32_t *daBuf = (uint32_t *)malloc(byteLength);
+		*nbEle = byteLength/4;
+
+		lint32 buf;
+		for(i = 0;i<*nbEle;i++)
+		{
+			j = i << 2; //*4
+			memcpy(buf.byte, bytes+j, 4);
+			symTransForm_4Bytes(buf.byte);
+			daBuf[i] = buf.uivalue;
+		}
+		free(bytes);
+		return daBuf;
+	}
 }
 
 
@@ -215,6 +510,7 @@ float *readFloatData_Yafan(char *srcFilePath, size_t *nbEle, int *status)
 		return daBuf;
 	}
 }
+
 
 /** ************************************************************************
  * @brief Read double data from path to source binary format file in endian systems.
@@ -330,6 +626,50 @@ void writeByteData_Yafan(unsigned char *bytes, size_t byteLength, char *tgtFileP
     fclose(pFile);
     *status = RW_SCES;
 }
+
+
+/** ************************************************************************
+ * @brief Write an array of unsigned short integers to a file in byte format.
+ *        Converts the integer data to bytes and saves it to the specified target file.
+ *        Ensures proper endianness handling during the conversion process.
+ * 
+ * @param   states          input array of unsigned short integers to be written
+ * @param   stateLength     the length of the `states` array
+ * @param   tgtFilePath     target file path where the byte data will be saved
+ * @param   status          pointer to an integer to store the operation status (macro definitions)
+ * *********************************************************************** */
+ void writeUShortData_inBytes_Yafan(unsigned short *states, size_t stateLength, char *tgtFilePath, int *status)
+ {
+     int state = SZ_SCES;
+     size_t byteLength = stateLength*2;
+     unsigned char* bytes = (unsigned char*)malloc(byteLength*sizeof(char));
+     convertUShortArrayToBytes(states, stateLength, bytes);
+     writeByteData_Yafan(bytes, byteLength, tgtFilePath, &state);
+     free(bytes);
+     *status = state;
+ }
+ 
+ 
+ /** ************************************************************************
+  * @brief Write an array of unsigned integers to a file in byte format.
+  *        Converts the integer data to bytes and saves it to the specified target file.
+  *        Ensures proper endianness handling during the conversion process.
+  * 
+  * @param   states          input array of unsigned integers to be written
+  * @param   stateLength     the length of the `states` array
+  * @param   tgtFilePath     target file path where the byte data will be saved
+  * @param   status          pointer to an integer to store the operation status (macro definitions)
+  * *********************************************************************** */
+ void writeUIntData_inBytes_Yafan(unsigned int *states, size_t stateLength, char *tgtFilePath, int *status)
+ {
+     int state = SZ_SCES;
+     size_t byteLength = stateLength*4;
+     unsigned char* bytes = (unsigned char*)malloc(byteLength*sizeof(char));
+     convertUIntArrayToBytes(states, stateLength, bytes);
+     writeByteData_Yafan(bytes, byteLength, tgtFilePath, &state);
+     free(bytes);
+     *status = state;
+ }
 
 
 /** ************************************************************************

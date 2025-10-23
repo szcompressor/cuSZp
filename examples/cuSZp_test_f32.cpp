@@ -66,7 +66,7 @@ int main()
     // Warmup for NVIDIA GPU.
     for(int i=0; i<3; i++)
     {
-        cuSZp_compress_plain_f32(d_oriData, d_cmpBytes, nbEle, &cmpSize1, errorBound, stream);
+        cuSZp_compress_1D_plain_f32(d_oriData, d_cmpBytes, nbEle, &cmpSize1, errorBound, stream);
     }
 
     // cuSZp-p testing.
@@ -75,7 +75,7 @@ int main()
     printf("=================================================\n");
     // cuSZp compression.
     timer_GPU.StartCounter(); // set timer
-    cuSZp_compress_plain_f32(d_oriData, d_cmpBytes, nbEle, &cmpSize1, errorBound, stream);
+    cuSZp_compress_1D_plain_f32(d_oriData, d_cmpBytes, nbEle, &cmpSize1, errorBound, stream);
     float cmpTime = timer_GPU.GetCounter();
 
     // Transfer compressed data to CPU then back to GPU, making sure compression ratio is correct.
@@ -87,7 +87,7 @@ int main()
         
     // cuSZp decompression.
     timer_GPU.StartCounter(); // set timer
-    cuSZp_decompress_plain_f32(d_decData, d_cmpBytes, nbEle, cmpSize1, errorBound, stream);
+    cuSZp_decompress_1D_plain_f32(d_decData, d_cmpBytes, nbEle, cmpSize1, errorBound, stream);
     float decTime = timer_GPU.GetCounter();
 
     // Print result.
@@ -114,11 +114,11 @@ int main()
 
     // cuSZp-o testing.
     printf("=================================================\n");
-    printf("=========Testing cuSZp-o-f64 on REL 1E-2=========\n");
+    printf("=========Testing cuSZp-o-f32 on REL 1E-2=========\n");
     printf("=================================================\n");
     // cuSZp compression.
     timer_GPU.StartCounter(); // set timer
-    cuSZp_compress_outlier_f32(d_oriData, d_cmpBytes, nbEle, &cmpSize2, errorBound, stream);
+    cuSZp_compress_1D_outlier_f32(d_oriData, d_cmpBytes, nbEle, &cmpSize2, errorBound, stream);
     cmpTime = timer_GPU.GetCounter();
 
     // Transfer compressed data to CPU then back to GPU, making sure compression ratio is correct.
@@ -130,7 +130,7 @@ int main()
         
     // cuSZp decompression.
     timer_GPU.StartCounter(); // set timer
-    cuSZp_decompress_outlier_f32(d_decData, d_cmpBytes, nbEle, cmpSize2, errorBound, stream);
+    cuSZp_decompress_1D_outlier_f32(d_decData, d_cmpBytes, nbEle, cmpSize2, errorBound, stream);
     decTime = timer_GPU.GetCounter();
 
     // Print result.

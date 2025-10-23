@@ -5,8 +5,12 @@
 #include <cstddef>
 #include "cuSZp/cuSZp_utility.h"
 #include "cuSZp/cuSZp_timer.h"
-#include "cuSZp/cuSZp_entry_f32.h"
-#include "cuSZp/cuSZp_entry_f64.h"
+#include "cuSZp/cuSZp_entry_1D_f32.h"
+#include "cuSZp/cuSZp_entry_1D_f64.h"
+#include "cuSZp/cuSZp_entry_2D_f32.h"
+#include "cuSZp/cuSZp_entry_2D_f64.h"
+#include "cuSZp/cuSZp_entry_3D_f32.h"
+#include "cuSZp/cuSZp_entry_3D_f64.h"
 #include <stdio.h>
 
 #ifdef __cplusplus
@@ -14,8 +18,10 @@ extern "C" {
 #endif
 
 typedef enum {
-    CUSZP_MODE_PLAIN   = 0, // Plain   fixed-length encoding mode
-    CUSZP_MODE_OUTLIER = 1  // Outlier fixed-length encoding mode
+    CUSZP_MODE_FIXED   = 0, // No-delta           fixed-length encoding mode
+    CUSZP_MODE_PLAIN   = 1, // Plain (with delta) fixed-length encoding mode
+    CUSZP_MODE_OUTLIER = 2, // Outlier            fixed-length encoding mode
+    CUSZP_MODE_AATROX  = 3  // AaTrox (ICS'25)    fixed-length encoding mode
 } cuszp_mode_t;
 
 typedef enum {
