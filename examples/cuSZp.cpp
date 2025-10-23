@@ -12,17 +12,19 @@ int main(int argc, char* argv[])
     char oriFilePath[640] = {0};
     char cmpFilePath[640] = {0};
     char decFilePath[640] = {0};
+    cuszp_dim_t processingDim;
     cuszp_type_t dataType;
     cuszp_mode_t encodingMode;
     char errorBoundMode[4] = {0};
     float errorBound = 0.0;
+    uint3 dims = {0, 0, 0};
 
-    // Check if there are enough arguments
-    if (argc < 9) {
+    // Usage information
+    if (argc == 1 || (argc == 2 && (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0))) {
         printf("cuSZp: A GPU error-bounded lossy compressor for floating-point data\n");
         printf("\n");
         printf("Usage:\n");
-        printf("  ./cuSZp -i [oriFilePath] -t [dataType] -m [encodingMode] -eb [errorBoundMode] [errorBound] -x [cmpFilePath] -o [decFilePath]\n");
+        printf("  ./cuSZp -i [oriFilePath] -t [dataType] -m [encodingMode] -d [dim] [dim_z] [dim_y] [dim_x] -eb [errorBoundMode] [errorBound] -x [cmpFilePath] -o [decFilePath]\n");
         printf("\n");
         printf("Options:\n");
         printf("  -i  [oriFilePath]    Path to the input file containing the original data\n");
@@ -30,8 +32,15 @@ int main(int argc, char* argv[])
         printf("                       f32      : Single precision (float)\n");
         printf("                       f64      : Double precision (double)\n");
         printf("  -m  [encodingMode]   Encoding mode to use. Options:\n");
-        printf("                       plain    : Plain fixed-length encoding mode\n");
-        printf("                       outlier  : Outlier fixed-length encoding mode\n");
+        printf("                       fixed    : No-delta fixed-length encoding mode\n");
+        printf("                       plain    : Plain fixed-length encoding mode (with delta)\n");
+        printf("                       outlier  : Outlier fixed-length encoding mode (with delta and outlier preservation)\n");
+        printf("  -d  [dim]            Data dimensionality and processing manner. Options:\n");
+        printf("                       1                         : 1D Processing Manner (can be used for all datasets)\n");
+        printf("                       2 [dim_z] [dim_y] [dim_z] : 2D Processing Manner (can be used for both 2D and 3D datasets)\n");
+        printf("                       3 [dim_z] [dim_y] [dim_z] : 3D Processing Manner (can be used for only 3D datasets)\n");
+        printf("                       Note: dim_x is the fastest varying dimension.\n");
+        printf("                       Hint: 2D processing can be used for 3D datasets by compressing each [dim_y x dim_x] slice independently.\n");
         printf("  -eb [errorBoundMode] [errorBound]\n");
         printf("                       errorBoundMode can only be:\n");
         printf("                       abs      : Absolute error bound\n");
@@ -41,10 +50,13 @@ int main(int argc, char* argv[])
         printf("  -o  [decFilePath]    Path to the decompressed output file (optional)\n");
         printf("\n");
         printf("Examples:\n");
-        printf("  ./cuSZp -i pressure_3000 -t f32 -m plain -eb abs 1E-4 -x pressure_3000.cuszp.cmp -o pressure_3000.cuszp.dec\n");
-        printf("  ./cuSZp -i ccd-tst.bin.d64 -t f64 -m outlier -eb abs 0.01\n");
-        printf("  ./cuSZp -i velocity_x.f32 -t f32 -m outlier -eb rel 0.01 -x velocity_x.f32.cuszp.cmp\n");
-        printf("  ./cuSZp -i xx.f32 -m outlier -eb rel 1e-4 -t f32\n");
+        printf("  ./cuSZp -i pressure_3000 -t f32 -m plain -d 1 -eb abs 1E-4 -x pressure_3000.cuszp.cmp -o pressure_3000.cuszp.dec\n");
+        printf("  ./cuSZp -i pressure_3000 -t f32 -m plain -d 1 -eb rel 1e-4\n");
+        printf("  ./cuSZp -i pressure_3000 -t f32 -m plain -d 2 1008 1008 352 -eb rel 1e-4\n");
+        printf("  ./cuSZp -i pressure_3000 -t f32 -m plain -d 3 1008 1008 352 -eb rel 1e-4\n");
+        printf("  ./cuSZp -i ccd-tst.bin.d64 -t f64 -m outlier -d 1 -eb abs 0.01\n");
+        printf("  ./cuSZp -i velocity_x.f32 -t f32 -m outlier -d 1 -eb rel 0.01 -x velocity_x.f32.cuszp.cmp\n");
+        printf("  ./cuSZp -i xx.f32 -m outlier -eb rel 1e-4 -t f32 -d 1\n");
         exit(EXIT_FAILURE);
     }
 
@@ -76,11 +88,35 @@ int main(int argc, char* argv[])
                     encodingMode = CUSZP_MODE_PLAIN;
                 } else if (strcmp(argv[i + 1], "outlier") == 0) {
                     encodingMode = CUSZP_MODE_OUTLIER;
+                } else if (strcmp(argv[i + 1], "fixed") == 0) {
+                    encodingMode = CUSZP_MODE_FIXED;
                 } else {
-                    printf("Error: Unsupported encoding mode. Use 'plain' or 'outlier'.\n");
+                    printf("Error: Unsupported encoding mode. Use 'fixed', 'plain', or 'outlier'.\n");
                     exit(EXIT_FAILURE);
                 }
                 i++;
+            }
+        } else if (strcmp(argv[i], "-d") == 0) {
+            // Dimensions and processing manner
+            if (i + 1 < argc) {
+                processingDim = (cuszp_dim_t)atoi(argv[i + 1]);
+                if (processingDim == 2 || processingDim == 3) {
+                    if (i + 3 >= argc) {
+                        printf("Error: Missing dimension sizes for 2D/3D processing.\n");
+                        exit(EXIT_FAILURE);
+                    }
+                    // dim_x is fastest, but stored in dims.x
+                    dims.z = (unsigned int)atoi(argv[i + 2]);
+                    dims.y = (unsigned int)atoi(argv[i + 3]);
+                    dims.x = (unsigned int)atoi(argv[i + 4]);
+                    i += 4;
+                } else if (processingDim == 1) {
+                    // Nothing else needed
+                    i += 1;
+                } else {
+                    printf("Error: Unsupported processing dimension. Use 1, 2, or 3.\n");
+                    exit(EXIT_FAILURE);
+                }
             }
         } else if (strcmp(argv[i], "-eb") == 0) {
             // Error bound mode and value
@@ -131,6 +167,10 @@ int main(int argc, char* argv[])
         oriData = (void*)readFloatData_Yafan(oriFilePath, &nbEle, &status);
         decData = (void*)malloc(nbEle*sizeof(float));
         cmpBytes = (unsigned char*)malloc(nbEle*sizeof(float));
+        if(processingDim != 1 && nbEle != (size_t)dims.x * (size_t)dims.y * (size_t)dims.z) {
+            fprintf(stderr, "Error: The number of elements in the original data does not match the dimensions\n");
+            return 1;
+        }
         
         // Value range calculation f32
         if(strcmp(errorBoundMode, "rel") == 0) {
@@ -150,6 +190,10 @@ int main(int argc, char* argv[])
         oriData = (void*)readDoubleData_Yafan(oriFilePath, &nbEle, &status);
         decData = (void*)malloc(nbEle*sizeof(double));
         cmpBytes = (unsigned char*)malloc(nbEle*sizeof(double));
+        if(processingDim != 1 && nbEle != (size_t)dims.x * (size_t)dims.y * (size_t)dims.z) {
+            fprintf(stderr, "Error: The number of elements in the original data does not match the dimensions\n");
+            return 1;
+        }
 
         // Value range calculation f64
         if(strcmp(errorBoundMode, "rel") == 0) {
@@ -191,12 +235,12 @@ int main(int argc, char* argv[])
     
     // Warmup for NVIDIA GPU.
     for(int i=0; i<10; i++) {
-        cuSZp_compress(d_oriData, d_cmpBytes, nbEle, &cmpSize, errorBound, dataType, encodingMode, stream);
+        cuSZp_compress(d_oriData, d_cmpBytes, nbEle, &cmpSize, errorBound, processingDim, dims, dataType, encodingMode, stream);
     }
 
     // cuSZp compression.
     timer_GPU.StartCounter(); // set timer
-    cuSZp_compress(d_oriData, d_cmpBytes, nbEle, &cmpSize, errorBound, dataType, encodingMode, stream);
+    cuSZp_compress(d_oriData, d_cmpBytes, nbEle, &cmpSize, errorBound, processingDim, dims, dataType, encodingMode, stream);
     float cmpTime = timer_GPU.GetCounter();
 
     // Transfer compressed data to CPU then back to GPU, making sure compression ratio is correct.
@@ -213,7 +257,7 @@ int main(int argc, char* argv[])
 
     // cuSZp decompression.
     timer_GPU.StartCounter(); // set timer
-    cuSZp_decompress(d_decData, d_cmpBytes, nbEle, cmpSize, errorBound, dataType, encodingMode, stream);
+    cuSZp_decompress(d_decData, d_cmpBytes, nbEle, cmpSize, errorBound, processingDim, dims, dataType, encodingMode, stream);
     float decTime = timer_GPU.GetCounter();
 
     // Print result.
