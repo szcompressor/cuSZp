@@ -164,7 +164,7 @@ If you want to use cuSZp as a C/C++ interal API, there are two ways.
     
     <details>
     <summary>Other modes and data type usages</summary>
-    
+
     1D Processing APIs, using outlier mode and single-precision data as an example.
     ```C
     #include <cuSZp.h> // Still the only header you need.
@@ -294,7 +294,7 @@ If you find cuSZp is useful, following papers can be considered for citing.
 
 The **[SC'23]** paper proposes the cuSZp compression framework with kernel fusion (a.k.a. cuSZp1, code see [Release](https://github.com/szcompressor/cuSZp/releases/tag/cuSZp-V1.1) or [Commit](https://github.com/szcompressor/cuSZp/tree/f4df2f1c5e9e529b05d344f2491a3fa7a5c2c0ed)). 
 The **[SC'24]** paper includes new lossless encoding modes and several performance optimization (a.k.a. cuSZp2, code see [Release](https://github.com/szcompressor/cuSZp/releases/tag/cuSZp-V2.0) or [Commit](https://github.com/szcompressor/cuSZp/tree/16e164762fe67785f498a44bae7984058a7a6952)). 
-The **[SC'25]** paper includes dimensionality support and versatility support. (a.k.a. cuSZp3, code see [Release]() or [Commit]()). 
+The **[SC'25]** paper includes dimensionality support (1D, 2D, 3D data with 3 compression mode for each) and versatility support. (a.k.a. cuSZp3, code see [Release]() or [Commit]()). 
 The **[ICS'25]** paper includes a fast and high-ratio AaTrox mode for 1D processing manner.
 
 ## Copyright
