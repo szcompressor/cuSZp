@@ -246,10 +246,6 @@ Decompressed data matches original within error bound: True
 ```
 
 
-
-## Documentation
-A more detailed documentation with some intrinsic usage descriptions will be updated soon.
-
 ## Authors and Citation
 
 cuSZp was developed and contributed by following authors.
