@@ -164,6 +164,7 @@ If you want to use cuSZp as a C/C++ interal API, there are two ways.
     
     <details>
     <summary>Other modes and data type usages</summary>
+    
     1D Processing APIs, using outlier mode and single-precision data as an example.
     ```C
     #include <cuSZp.h> // Still the only header you need.
