@@ -99,9 +99,17 @@ include(Installing)
 enable_testing()
 
 # Add test for installed cuSZp_test binary
-add_test(NAME cuSZpTest_f32 COMMAND ${CMAKE_INSTALL_PREFIX}/bin/cuSZp_test_f32)
-add_test(NAME cuSZpTest_f64 COMMAND ${CMAKE_INSTALL_PREFIX}/bin/cuSZp_test_f64)
+add_test(NAME cuSZpTest_f32_1D COMMAND ${CMAKE_INSTALL_PREFIX}/bin/cuSZp_test_f32_1D)
+add_test(NAME cuSZpTest_f32_2D COMMAND ${CMAKE_INSTALL_PREFIX}/bin/cuSZp_test_f32_2D)
+add_test(NAME cuSZpTest_f32_3D COMMAND ${CMAKE_INSTALL_PREFIX}/bin/cuSZp_test_f32_3D)
+add_test(NAME cuSZpTest_f64_1D COMMAND ${CMAKE_INSTALL_PREFIX}/bin/cuSZp_test_f64_1D)
+add_test(NAME cuSZpTest_f64_2D COMMAND ${CMAKE_INSTALL_PREFIX}/bin/cuSZp_test_f64_2D)
+add_test(NAME cuSZpTest_f64_3D COMMAND ${CMAKE_INSTALL_PREFIX}/bin/cuSZp_test_f64_3D)
 
 # Optional: Set working directory if required
-set_tests_properties(cuSZpTest_f32 PROPERTIES WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin)
-set_tests_properties(cuSZpTest_f64 PROPERTIES WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin)
+set_tests_properties(cuSZpTest_f32_1D PROPERTIES WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin)
+set_tests_properties(cuSZpTest_f32_2D PROPERTIES WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin)
+set_tests_properties(cuSZpTest_f32_3D PROPERTIES WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin)
+set_tests_properties(cuSZpTest_f64_1D PROPERTIES WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin)
+set_tests_properties(cuSZpTest_f64_2D PROPERTIES WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin)
+set_tests_properties(cuSZpTest_f64_3D PROPERTIES WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin)

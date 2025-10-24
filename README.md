@@ -113,7 +113,7 @@ cuSZp compression ratio: 13.737053
 Pass error check!
 ```
 
-You will also see two binaries generated this folder, named ```cuSZp_test_f32``` and ```cuSZp_test_f64```. They are used for functionality test and can be executed by ```./cuSZp_test_f32``` and ```./cuSZp_test_f64```. (to yafan: will be updated with higher-dim tests)
+You will also see two binaries generated this folder, named ```cuSZp_test_f32_XD``` and ```cuSZp_test_f64_XD```. They are used for functionality test and can be executed by ```./cuSZp_test_f32_XD``` and ```./cuSZp_test_f64_XD```. (X can be 1, 2, 3, which are supported dimensions in cuSZp)
 
 ### Using cuSZp as C/C++ Interal API
 If you want to use cuSZp as a C/C++ interal API, there are two ways.
@@ -198,7 +198,7 @@ If you want to use cuSZp as a C/C++ interal API, there are two ways.
 
     
     In this case, you do not need to set ```cuszp_dim_t```, ```cuszp_type_t```, and ```cuszp_mode_t```.
-    More detaild examples can be found in ```cuSZp/examples/cuSZp_test_f32.cpp``` and ```cuSZp/examples/cuSZp_test_f64.cpp```. (to yafan: will be updated with higher-dim tests)
+    More detaild examples can be found in ```cuSZp/examples/cuSZp_test_f32_XD.cpp``` and ```cuSZp/examples/cuSZp_test_f64_XD.cpp```. (X can be 1, 2, 3, which are supported dimensions in cuSZp)
 
 
 ### Using cuSZp as Python API
