@@ -4,60 +4,74 @@ import numpy as np
 # Load the shared library (using default installation path, replace if neccessary)
 lib = ctypes.CDLL('../install/lib/libcuSZp.so')
 
-# Define ctypes for the C functions with void pointers for flexible input/output data
+# Define uint3 in ctypes
+class Uint3(ctypes.Structure):
+    _fields_ = [("x", ctypes.c_uint), ("y", ctypes.c_uint), ("z", ctypes.c_uint)]
+
+# Update function signatures with dim and dims
 lib.cuSZp_compress.argtypes = [
-    ctypes.c_void_p,  # GPU pointer for input data (void* for flexibility)
-    ctypes.c_void_p,  # GPU pointer for compressed output (interpreted as unsigned char*)
-    ctypes.c_size_t,  # Number of elements
-    ctypes.POINTER(ctypes.c_size_t),  # Compressed size output
-    ctypes.c_float,  # Error bound
-    ctypes.c_int,    # Data type (0 for float, 1 for double)
-    ctypes.c_int,    # Mode (0 for plain, 1 for outlier)
-    ctypes.c_void_p  # Stream (optional, can be None)
+    ctypes.c_void_p,                   # d_oriData
+    ctypes.c_void_p,                   # d_cmpBytes
+    ctypes.c_size_t,                   # nbEle
+    ctypes.POINTER(ctypes.c_size_t),  # cmpSize
+    ctypes.c_float,                    # errorBound
+    ctypes.c_int,                      # dim (cuszp_dim_t),   1 for 1D, 2 for 2D, 3 for 3D
+    Uint3,                             # dims (uint3)
+    ctypes.c_int,                      # type (cuszp_type_t), 0 for f32, 1 for f64
+    ctypes.c_int,                      # mode (cuszp_mode_t), 0 for fixed, 1 for plain, 2 for outlier
+    ctypes.c_void_p                    # stream
 ]
 
 lib.cuSZp_decompress.argtypes = [
-    ctypes.c_void_p,  # GPU pointer for decompressed output (void*)
-    ctypes.c_void_p,  # Compressed input buffer (unsigned char*)
-    ctypes.c_size_t,  # Number of elements
-    ctypes.c_size_t,  # Compressed size
-    ctypes.c_float,   # Error bound
-    ctypes.c_int,     # Data type (0 for float, 1 for double)
-    ctypes.c_int,     # Mode (0 for plain, 1 for outlier)
-    ctypes.c_void_p   # Stream (optional, can be None)
+    ctypes.c_void_p,                   # d_decData
+    ctypes.c_void_p,                   # d_cmpBytes
+    ctypes.c_size_t,                   # nbEle
+    ctypes.c_size_t,                   # cmpSize
+    ctypes.c_float,                    # errorBound
+    ctypes.c_int,                      # dim (cuszp_dim_t)
+    Uint3,                             # dims
+    ctypes.c_int,                      # type
+    ctypes.c_int,                      # mode
+    ctypes.c_void_p                    # stream
 ]
 
 class cuSZp:
     def __init__(self):
         pass
 
-    def compress(self, d_oriData, d_cmpBytes, num_elements, error_bound=0.01, data_type=0, mode=0):
-        # Initialize size for compressed data
+    def compress(self, d_oriData, d_cmpBytes, num_elements, error_bound=0.01,
+                 dim=1, dims=(0, 0, 0), data_type=0, mode=0, stream=None):
         compressed_size = ctypes.c_size_t(0)
+        dims_struct = Uint3(dims[0], dims[1], dims[2])  # Convert tuple to uint3
 
-        # Call the C function
         lib.cuSZp_compress(
-            d_oriData,  # GPU pointer for input data
-            d_cmpBytes,  # GPU pointer for compressed output (unsigned char*)
+            d_oriData,
+            d_cmpBytes,
             num_elements,
             ctypes.byref(compressed_size),
             ctypes.c_float(error_bound),
+            ctypes.c_int(dim),
+            dims_struct,
             ctypes.c_int(data_type),
             ctypes.c_int(mode),
-            None  # Stream (optional, set to None)
+            ctypes.c_void_p(0) if stream is None else stream
         )
-        
+
         return compressed_size.value
 
-    def decompress(self, d_decData, d_cmpBytes, num_elements, compressed_size, error_bound=0.01, data_type=0, mode=0):
-        # Call the C function
+    def decompress(self, d_decData, d_cmpBytes, num_elements, compressed_size,
+                   error_bound=0.01, dim=1, dims=(0, 0, 0), data_type=0, mode=0, stream=None):
+        dims_struct = Uint3(dims[0], dims[1], dims[2])
+
         lib.cuSZp_decompress(
-            d_decData,  # GPU pointer for decompressed output
-            d_cmpBytes,  # GPU pointer for compressed input
+            d_decData,
+            d_cmpBytes,
             num_elements,
             compressed_size,
             ctypes.c_float(error_bound),
+            ctypes.c_int(dim),
+            dims_struct,
             ctypes.c_int(data_type),
             ctypes.c_int(mode),
-            None  # Stream (optional, set to None)
+            ctypes.c_void_p(0) if stream is None else stream
         )

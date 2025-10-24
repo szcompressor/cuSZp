@@ -1,84 +1,116 @@
 import numpy as np
 import pycuda.driver as cuda
-import pycuda.autoinit  # Automatically initializes CUDA driver
+import pycuda.autoinit
 import ctypes
 import sys
+import time
 from pycuSZp import cuSZp
 
 def read_dataset(filename, dtype):
     return np.fromfile(filename, dtype=dtype)
 
 def main():
-    if len(sys.argv) < 3:
-        print("Usage: python example-hpc.py <dataset_file> <data_type (f32 or f64)>")
+    if len(sys.argv) < 7:
+        print("Usage: python example-hpc.py <dataset_file> <data_type: f32|f64> <mode: fixed|plain|outlier> <dim: 1|2|3> <dim_z> <dim_y> <dim_x> <error_bound>")
+        print("       if dim=1, dim_z, dim_y, and dim_x can be any value (e.g., 0).")
+        print("       dim_x is the fastest changing dimension.")
+        print("Example: python example-hpc.py data.f32 f32 plain 3 100 100 100 1e-3")
+        print("         python example-hpc.py data.f64 f64 outlier 2 0 1000 1000 1e-4")
+        print("         python example-hpc.py data.f32 f32 fixed 1 0 0 0 1e-2")
         sys.exit(1)
 
     filename = sys.argv[1]
-    data_type = sys.argv[2]
-    error_bound = 1E-2
+    dtype_str = sys.argv[2]
+    mode_str = sys.argv[3]
+    dim = int(sys.argv[4])
+    dim_z, dim_y, dim_x = int(sys.argv[5]), int(sys.argv[6]), int(sys.argv[7])
+    error_bound = float(sys.argv[8])
 
+    dims = (dim_x, dim_y, dim_z)
 
-    if data_type == 'f32':
+    # Data type
+    if dtype_str == 'f32':
         data = read_dataset(filename, np.float32)
-        dtype = 0  # float
-    elif data_type == 'f64':
+        data_type = 0
+    elif dtype_str == 'f64':
         data = read_dataset(filename, np.float64)
-        dtype = 1  # double
+        data_type = 1
     else:
-        print("Invalid data type. Use 'f32' or 'f64'.")
+        print("Invalid data type.")
         sys.exit(1)
 
+    # Mode
+    if mode_str == 'plain':
+        mode = 1
+    elif mode_str == 'outlier':
+        mode = 2
+    elif mode_str == 'fixed':
+        mode = 0
+    else:
+        print("Invalid mode.")
+        sys.exit(1)
 
     compressor = cuSZp()
 
-    # Calculate original data size
-    original_size = data.nbytes  # in bytes
-
-    # Allocate GPU memory and move input data
+    # Allocate GPU memory
     d_oriData = cuda.mem_alloc(data.nbytes)
+    d_cmpBytes = cuda.mem_alloc(data.nbytes)
+    d_decData = cuda.mem_alloc(data.nbytes)
     cuda.memcpy_htod(d_oriData, data)
 
-    # Allocate GPU memory for the compressed output
-    d_cmpBytes = cuda.mem_alloc(data.nbytes)  # Output buffer for compressed data
-
-    # cuSZp compression
-    compressed_size = compressor.compress(
+    # Compression
+    start_c = time.perf_counter()
+    cmp_size = compressor.compress(
         ctypes.c_void_p(int(d_oriData)),
         ctypes.c_void_p(int(d_cmpBytes)),
         data.size,
         error_bound,
-        data_type=dtype,
-        mode=0                                # Plain mode, 1 for outlier mode     
+        dim=dim,
+        dims=dims,
+        data_type=data_type,
+        mode=mode
     )
+    end_c = time.perf_counter()
 
-    # Print compression results
-    print(f"Original data size:   {original_size} bytes")
-    print(f"Compressed data size: {compressed_size} bytes")
-    compression_ratio = original_size / compressed_size
-    print(f"Compression Ratio: {compression_ratio:.2f}")
-
-    # Allocate GPU memory for decompressed output
-    d_decData = cuda.mem_alloc(data.nbytes)
-
-    # cuSZp decompression
+    # Decompression
+    start_d = time.perf_counter()
     compressor.decompress(
         ctypes.c_void_p(int(d_decData)),
         ctypes.c_void_p(int(d_cmpBytes)),
         data.size,
-        compressed_size,
+        cmp_size,
         error_bound,
-        data_type=dtype,
-        mode=0                              # Plain mode, 1 for outlier mode
+        dim=dim,
+        dims=dims,
+        data_type=data_type,
+        mode=mode
     )
+    end_d = time.perf_counter()
 
-    # Copy decompressed data back to CPU
+    # Evaluate performance
+    comp_time = end_c - start_c
+    decomp_time = end_d - start_d
+    throughput_comp = (data.nbytes / comp_time) / (1024 ** 3)
+    throughput_decomp = (data.nbytes / decomp_time) / (1024 ** 3)
+
+    print(f"\n===== cuSZp GPU Compression Test =====")
+    print(f"Data file:         {filename}")
+    print(f"Type:              {dtype_str}")
+    print(f"Mode:              {mode_str}")
+    print(f"Dim:               {dim}D ({dim_z}, {dim_y}, {dim_x})")
+    print(f"Error bound:       {error_bound}")
+    print(f"Original size:     {data.nbytes / (1024**2):.2f} MB")
+    print(f"Compressed size:   {cmp_size / (1024**2):.2f} MB")
+    print(f"Compression ratio: {data.nbytes / cmp_size:.2f}x")
+    print(f"Compression speed: {throughput_comp:.2f} GB/s")
+    print(f"Decompression speed: {throughput_decomp:.2f} GB/s")
+
+    # Optional correctness check
     decompressed = np.empty_like(data)
     cuda.memcpy_dtoh(decompressed, d_decData)
+    print(f"Within bound: {np.allclose(data, decompressed, atol=error_bound)}")
 
-    # Error checking for decompression
-    print(f"Decompressed data matches original within error bound: {np.allclose(data, decompressed, atol=error_bound)}")
-
-    # Free GPU memory
+    # Free
     d_oriData.free()
     d_cmpBytes.free()
     d_decData.free()

@@ -202,16 +202,21 @@ If you want to use cuSZp as a C/C++ interal API, there are two ways.
 
 
 ### Using cuSZp as Python API
-(to yafan: will be updated with higher-dim tests)
 cuSZp also supports Python bindings for fast compression on GPU array.
 Examples can be found in ```cuSZp/python/```. 
-The required Python packages include ```ctypes, numpy, pycuda```. ```pytorch``` is optional unless you want to use cuSZp compress a ```torch``` tensor.
+The required Python packages include ```ctypes```, ```numpy```, ```pycuda```. ```pytorch``` is optional unless you want to use cuSZp compress a ```torch``` tensor.
 
 We provide two examples for showing how cuSZp can be used to compress/decompress a HPC field in numpy format (see ```python/example-hpc.py```) and a torch tensor (see ```python/example-torch.py```).
 To execute them:
 ```shell
 # This shows cuSZp compresses a HPC field with f32 format.
-python example-hpc.py ./pressure_3000 f32
+# Usage: python example-hpc.py <dataset_file> <data_type: f32|f64> <mode: fixed|plain|outlier> <dim: 1|2|3> <dim_z> <dim_y> <dim_x> <error_bound>
+#        if dim=1, dim_z, dim_y, and dim_x can be any value (e.g., 0).
+#        dim_x is the fastest changing dimension.
+# Example: python example-hpc.py data.f32 f32 plain 3 100 100 100 1e-3
+#          python example-hpc.py data.f64 f64 outlier 2 0 1000 1000 1e-4
+#          python example-hpc.py data.f32 f32 fixed 1 0 0 0 1e-2
+python example-hpc.py ./pressure_3000 f32 plain 3 1008 1008 352 1e-4
 
 # This shows cuSZp compresses a 4 GB f32 torch tensor.
 python example-torch.py
@@ -223,26 +228,29 @@ Similarly, we measure throughput in an end-to-end manner (e.g. following code bl
 compressor = cuSZp()
 # cuSZp compression.
 start_time = time.time()                    # set cuSZp timer start
-compressed_size = compressor.compress(
-    ctypes.c_void_p(data.data_ptr()),       # Input data pointer on GPU
-    ctypes.c_void_p(int(d_cmpBytes)),       # Output buffer on GPU
-    data.numel(),                           # Number of elements
-    1E-2,                                   # Set 1E-2 as error bound.
-    data_type=0,                            # float 32, 1 for float64 (i.e. double)
-    mode=0                                  # Plain mode, 1 for outlier mode
+cmp_size = compressor.compress(
+    ctypes.c_void_p(int(d_oriData)),        # original data to be compressed in GPU
+    ctypes.c_void_p(int(d_cmpBytes)),       # compressed data in GPU
+    data.size,                              # original data size (e.g., 1024 elements)
+    error_bound,                            # error bound set by user, say 1e-2
+    dim=dim,                                # can be 1, 2, or 3. 1 means 1D processing manner
+    dims=dims,                              # (dim_z, dim_y, dim_x), dim_x is the fastest changing dimension
+    data_type=data_type,                    # 0 for f32, 1 for f64
+    mode=mode                               # 0 for fixed mode, 1 for plain mode, 2 for outlier mode
 )
 compression_time = time.time() - start_time # set cuSZp timer end
 ```
 
-This throughput measurement can be shown as below:
+This throughput measurement (on an A100 GPU) can be shown as below:
 ```shell
 $ python example-torch.py 
-Original data size:   4294967296 bytes
-Compressed data size: 971519248 bytes
-Compression Ratio: 4.42
-Compression Throughput:   214.07 GB/s
-Decompression Throughput: 345.08 GB/s
-Decompressed data matches original within error bound: True
+[cuSZp Compression on Torch Tensor]
+Original size:   4096.00 MB
+Compressed size: 926.51 MB
+Compression ratio: 4.42x
+Compression speed: 231.10 GB/s
+Decompression speed: 349.66 GB/s
+Data matches within error bound: True
 ```
 
 
