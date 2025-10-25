@@ -11,7 +11,7 @@ environment:
 # Install dependencies including CUDA toolkit (nvcc)
 install:
   - sudo apt-get update -y
-  - sudo apt-get install -y build-essential git wget
+  - sudo apt-get install -y build-essential git wget cmake
   # Install CMake that is compatible with cuSZp build process
   - sudo apt-get purge --auto-remove cmake -y
   - wget -q https://github.com/Kitware/CMake/releases/download/v3.27.9/cmake-3.27.9-linux-x86_64.tar.gz
