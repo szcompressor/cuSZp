@@ -43,6 +43,7 @@ jobs:
           name: cuSZp
           fail_ci_if_error: true
           exclude: |
+            examples/*
             cmake/*
             install/*
             python/*
