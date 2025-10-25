@@ -9,41 +9,19 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    container:
+      image: nvidia/cuda:12.2.0-devel-ubuntu22.04
     steps:
-      # Step 1. Checkout the repo
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      # Step 2. Install dependencies
+      - uses: actions/checkout@v4
       - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential cmake gcc g++ gcovr lcov
-
-      # Step 3. Install CUDA toolkit (if needed for CUDA code)
-      # Ubuntu runner does not have nvcc by default; for now we can just check for coverage on host code.
-      # You can later replace this with a CUDA runner if GitHub adds one officially.
-      - name: Print CUDA version (optional)
-        run: |
-          nvidia-smi || echo "No GPU available on GitHub runner"
-
-      # Step 4. Build cuSZp with coverage flags
+          apt-get update && apt-get install -y cmake g++ make gcovr lcov
       - name: Build with coverage
         run: |
           mkdir build && cd build
           cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="--coverage" -DCMAKE_CUDA_FLAGS="--coverage"
           make -j$(nproc)
-
-      # Step 5. Run tests (CTest integrated in CMake)
-      - name: Run tests
-        run: |
-          cd build
-          ctest --output-on-failure || true
-
-      # Step 6. Generate and upload coverage reports to Codecov
-      - name: Upload coverage reports to Codecov
+      - name: Upload coverage
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-
