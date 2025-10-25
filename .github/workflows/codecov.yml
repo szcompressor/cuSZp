@@ -38,10 +38,8 @@ jobs:
         run: |
           cd build
           gcovr -r .. \
-            --filter '../src|../include' \
+            --filter 'src/|include/' \
             --exclude '(^|.*/)+src/cuSZp_utility\.cu$' \
-            --exclude '.*build/.*' \
-            --exclude-directories 'cmake|install|python|examples' \
             --xml-pretty -o coverage.xml
 
       - name: Upload coverage
