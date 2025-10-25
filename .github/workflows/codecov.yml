@@ -38,9 +38,11 @@ jobs:
         run: |
           cd build
           gcovr -r .. \
-                --xml-pretty -o coverage.xml \
-                --exclude '.*src/cuSZp_utility\.cu$' \
-                --exclude-directories 'cmake|install|python'
+            --filter '../src|../include' \
+            --exclude '(^|.*/)+src/cuSZp_utility\.cu$' \
+            --exclude '.*build/.*' \
+            --exclude-directories 'cmake|install|python|examples' \
+            --xml-pretty -o coverage.xml
 
       - name: Upload coverage
         uses: codecov/codecov-action@v5
@@ -50,5 +52,5 @@ jobs:
           flags: unittests
           name: cuSZp
           fail_ci_if_error: true
-          handle_no_reports_found: true
+          disable_search: true
 
