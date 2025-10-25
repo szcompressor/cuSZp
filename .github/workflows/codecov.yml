@@ -34,17 +34,21 @@ jobs:
           cd build
           ctest -V || true
 
+      - name: Generate coverage report
+        run: |
+          cd build
+          gcovr -r .. \
+                --xml-pretty -o coverage.xml \
+                --exclude '.*src/cuSZp_utility\.cu$' \
+                --exclude-directories 'cmake|install|python'
+
       - name: Upload coverage
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./build/
+          files: ./build/coverage.xml
           flags: unittests
           name: cuSZp
           fail_ci_if_error: true
-          exclude: |
-            src/cuSZp_utility.cu
-            cmake/*
-            install/*
-            python/*
+          handle_no_reports_found: true
 
