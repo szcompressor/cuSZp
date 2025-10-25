@@ -1,4 +1,6 @@
-coverage:
-  ignore:
-    - examples/*
-    - src/*utility*
+ignore:
+  - "examples/**"
+  - "src/**/*utility*"
+  - "cmake/**"
+  - "install/**"
+  - "python/**"
