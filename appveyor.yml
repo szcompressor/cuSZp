@@ -11,7 +11,7 @@ environment:
 # Install dependencies including CUDA toolkit (nvcc)
 install:
   - sudo apt-get update -y
-  - sudo apt-get install -y build-essential cmake git nvidia-cuda-toolkit
+  - sudo apt-get install -y build-essential git wget
   # Install CMake that is compatible with cuSZp build process
   - sudo apt-get purge --auto-remove cmake -y
   - wget -q https://github.com/Kitware/CMake/releases/download/v3.27.9/cmake-3.27.9-linux-x86_64.tar.gz
@@ -19,6 +19,12 @@ install:
   - sudo mv cmake-3.27.9-linux-x86_64 /opt/cmake
   - sudo ln -sf /opt/cmake/bin/* /usr/local/bin/
   - cmake --version
+  # Install CUDA 12.2 (supports C++17)
+  - wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-keyring_1.1-1_all.deb
+  - sudo dpkg -i cuda-keyring_1.1-1_all.deb
+  - sudo apt-get update -y
+  - sudo apt-get install -y cuda-toolkit-12-2
+  - nvcc --version
 
 # Build
 build_script:
