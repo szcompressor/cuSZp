@@ -69,6 +69,8 @@ int main()
     for(int i=0; i<3; i++)
     {
         cuSZp_compress(d_oriData, d_cmpBytes, nbEle, &cmpSize1, errorBound, CUSZP_DIM_3D, dims, CUSZP_TYPE_FLOAT, CUSZP_MODE_FIXED, stream);
+        cuSZp_decompress(d_decData, d_cmpBytes, nbEle, cmpSize1, errorBound, CUSZP_DIM_3D, dims, CUSZP_TYPE_FLOAT, CUSZP_MODE_FIXED, stream);
+        cudaMemset(d_cmpBytes, 0, sizeof(float)*nbEle);
     }
 
     // cuSZp-f testing.
