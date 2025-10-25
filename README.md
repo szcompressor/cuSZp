@@ -2,6 +2,7 @@
 <a href="./LICENSE"><img src="https://img.shields.io/badge/License-BSD%203--Clause-blue.svg"></a>
 [![codecov](https://codecov.io/github/szcompressor/cuSZp/graph/badge.svg?token=Y9S48L75L7)](https://codecov.io/github/szcompressor/cuSZp)
 [![Documentation Status](https://readthedocs.org/projects/cuszp-documentation/badge/?version=latest)](https://cuszp-documentation.readthedocs.io/en/latest/?badge=latest)
+[![Build status](https://ci.appveyor.com/api/projects/status/sr6nbou988c9opv2?svg=true)](https://ci.appveyor.com/project/hyfshishen/cuszp)
 
 cuSZp is an ultra-fast and user-friendly GPU error-bounded lossy compressor for floating-point data array (both single- and double-precision). In short, cuSZp has several key features:
 
