@@ -29,6 +29,11 @@ jobs:
                    -DCMAKE_SHARED_LINKER_FLAGS="--coverage"
           make -j$(nproc)
 
+      - name: Run tests
+        run: |
+          cd build
+          ctest -V || true
+
       - name: Upload coverage
         uses: codecov/codecov-action@v5
         with:
