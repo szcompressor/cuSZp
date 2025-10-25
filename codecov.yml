@@ -1,6 +1,6 @@
 ignore:
   - "examples/**"
-  - "src/**/*utility*"
+  - "src/*utility*"
   - "cmake/**"
   - "install/**"
   - "python/**"

@@ -73,6 +73,7 @@ Some example commands can be found here:
 ./cuSZp -i pressure_3000 -t f32 -m plain -d 1 -eb rel 1e-4
 ./cuSZp -i pressure_3000 -t f32 -m plain -d 2 1008 1008 352 -eb rel 1e-4
 ./cuSZp -i pressure_3000 -t f32 -m plain -d 3 1008 1008 352 -eb rel 1e-4
+./cuSZp -i a_1024_1024_2D_panel.f64 -t f64 -m fixed -d 2 1 1024 1024 -eb abs 1e-3
 ./cuSZp -i ccd-tst.bin.d64 -t f64 -m outlier -d 1 -eb abs 0.01
 ./cuSZp -i velocity_x.f32 -t f32 -m outlier -d 1 -eb rel 0.01 -x velocity_x.f32.cuszp.cmp
 ./cuSZp -i xx.f32 -m outlier -eb rel 1e-4 -t f32 -d 1
