@@ -20,9 +20,17 @@ jobs:
       - name: Build with coverage
         run: |
           mkdir build && cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="--coverage" -DCMAKE_CUDA_FLAGS="--coverage"
+          cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="--coverage" -DCMAKE_CUDA_FLAGS="-Xcompiler --coverage"
           make -j$(nproc)
       - name: Upload coverage
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./build/
+          flags: unittests
+          name: cuSZp
+          fail_ci_if_error: true
+          ignore: |
+            cmake/*
+            install/*
+            python/*
