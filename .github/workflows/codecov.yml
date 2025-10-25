@@ -17,7 +17,7 @@ jobs:
       - name: Install dependencies
         run: |
           export DEBIAN_FRONTEND=noninteractive
-          apt-get update && apt-get install -y cmake g++ make gcovr lcov
+          apt-get update && apt-get install -y cmake g++ make gcovr lcov git curl
 
       - name: Build with coverage
         run: |
@@ -37,7 +37,7 @@ jobs:
           flags: unittests
           name: cuSZp
           fail_ci_if_error: true
-          ignore: |
+          exclude: |
             cmake/*
             install/*
             python/*
