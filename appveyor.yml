@@ -24,6 +24,10 @@ install:
   - sudo dpkg -i cuda-keyring_1.1-1_all.deb
   - sudo apt-get update -y
   - sudo apt-get install -y cuda-toolkit-12-2
+  # Add CUDA to PATH and verify
+  - echo 'export PATH=/usr/local/cuda-12.2/bin:$PATH' >> ~/.bashrc
+  - source ~/.bashrc
+  - export PATH=/usr/local/cuda-12.2/bin:$PATH
   - nvcc --version
 
 # Build
