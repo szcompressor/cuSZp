@@ -68,7 +68,7 @@ int main()
     // Warmup for NVIDIA GPU.
     for(int i=0; i<3; i++)
     {
-        cuSZp_compress_2D_fixed_f32(d_oriData, d_cmpBytes, nbEle, &cmpSize1, dims, errorBound, stream);
+        cuSZp_compress(d_oriData, d_cmpBytes, nbEle, &cmpSize1, errorBound, CUSZP_DIM_2D, dims, CUSZP_TYPE_FLOAT, CUSZP_MODE_FIXED, stream);
     }
 
     // cuSZp-f testing.

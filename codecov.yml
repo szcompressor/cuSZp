@@ -1,6 +1,6 @@
 ignore:
   - "examples/**"
-  - "src/*utility*"
+  - "src/*utility*" # dev-only post-hoc metrics; excluded from coverage
   - "cmake/**"
   - "install/**"
   - "python/**"
