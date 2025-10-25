@@ -12,7 +12,7 @@ jobs:
     container:
       image: nvidia/cuda:12.2.0-devel-ubuntu22.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install dependencies
         run: |
