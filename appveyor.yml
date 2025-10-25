@@ -12,6 +12,13 @@ environment:
 install:
   - sudo apt-get update -y
   - sudo apt-get install -y build-essential cmake git nvidia-cuda-toolkit
+  # Install CMake that is compatible with cuSZp build process
+  - sudo apt-get purge --auto-remove cmake -y
+  - wget -q https://github.com/Kitware/CMake/releases/download/v3.27.9/cmake-3.27.9-linux-x86_64.tar.gz
+  - tar -xzf cmake-3.27.9-linux-x86_64.tar.gz
+  - sudo mv cmake-3.27.9-linux-x86_64 /opt/cmake
+  - sudo ln -sf /opt/cmake/bin/* /usr/local/bin/
+  - cmake --version
 
 # Build
 build_script:
