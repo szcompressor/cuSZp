@@ -1,20 +1,21 @@
 version: 1.0.{build}
 
-# Use Windows environment with CUDA preinstalled
-image: Visual Studio 2022
+# Use Ubuntu image
+image: Ubuntu2004
 
-# Environment setup
+# Basic environment
 environment:
   CMAKE_BUILD_TYPE: Release
   INSTALL_PREFIX: install
-  CUDA_PATH: "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.2"
 
-# Build steps
+# Install dependencies including CUDA toolkit (nvcc)
+install:
+  - sudo apt-get update -y
+  - sudo apt-get install -y build-essential cmake git nvidia-cuda-toolkit
+
+# Build
 build_script:
-  - echo "=== Setting up environment variables ==="
-  - set PATH=%CUDA_PATH%\bin;%CUDA_PATH%\libnvvp;%PATH%
-  - nvcc --version
-  - echo "=== Building cuSZp ==="
-  - cmake -S . -B build -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% -DCMAKE_INSTALL_PREFIX=%INSTALL_PREFIX%
-  - cmake --build build --config %CMAKE_BUILD_TYPE%
+  - echo "=== Building cuSZp on Ubuntu ==="
+  - cmake -S . -B build -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}
+  - cmake --build build -- -j"$(nproc)"
   - cmake --install build
