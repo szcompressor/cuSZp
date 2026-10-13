@@ -44,7 +44,7 @@ void cuSZp_compress_2D_fixed_f64(double* d_oriData, unsigned char* d_cmpBytes, s
 
     // Obtain compression ratio and move data back to CPU.  
     cudaMemcpy(&glob_sync, d_cmpOffset+cmpOffSize-1, sizeof(unsigned int), cudaMemcpyDeviceToHost);
-    *cmpSize = (size_t)glob_sync + blockNum;
+    *cmpSize = (size_t)glob_sync + (blockNum + 3) / 4 * 4;  // include the rate array's 4-byte alignment padding (matches rate_ofs in the kernels)
 
     // Free memory that is used.
     cudaFree(d_cmpOffset);
@@ -142,7 +142,7 @@ void cuSZp_compress_2D_plain_f64(double* d_oriData, unsigned char* d_cmpBytes, s
 
     // Obtain compression ratio and move data back to CPU.  
     cudaMemcpy(&glob_sync, d_cmpOffset+cmpOffSize-1, sizeof(unsigned int), cudaMemcpyDeviceToHost);
-    *cmpSize = (size_t)glob_sync + blockNum;
+    *cmpSize = (size_t)glob_sync + (blockNum + 3) / 4 * 4;  // include the rate array's 4-byte alignment padding (matches rate_ofs in the kernels)
 
     // Free memory that is used.
     cudaFree(d_cmpOffset);
@@ -240,7 +240,7 @@ void cuSZp_compress_2D_outlier_f64(double* d_oriData, unsigned char* d_cmpBytes,
 
     // Obtain compression ratio and move data back to CPU.  
     cudaMemcpy(&glob_sync, d_cmpOffset+cmpOffSize-1, sizeof(unsigned int), cudaMemcpyDeviceToHost);
-    *cmpSize = (size_t)glob_sync + blockNum;
+    *cmpSize = (size_t)glob_sync + (blockNum + 3) / 4 * 4;  // include the rate array's 4-byte alignment padding (matches rate_ofs in the kernels)
 
     // Free memory that is used.
     cudaFree(d_cmpOffset);
