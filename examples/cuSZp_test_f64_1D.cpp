@@ -7,6 +7,9 @@
 
 int main()
 {
+    // Number of failed error checks, returned as the exit status.
+    int failures = 0;
+
     // For measuring the end-to-end throughput.
     TimingGPU timer_GPU;
 
@@ -112,7 +115,11 @@ int main()
         }
     }
     if(!not_bound) printf("\033[0;32mPass error check!\033[0m\n");
-    else printf("\033[0;31mFail error check! Exceeding data count: %d\033[0m\n", not_bound);
+    else
+    {
+        printf("\033[0;31mFail error check! Exceeding data count: %d\033[0m\n", not_bound);
+        failures++;
+    }
     printf("\033[1mDone with testing cuSZp-f on REL 1E-2!\033[0m\n\n");
 
     // cuSZp-p testing.
@@ -155,7 +162,11 @@ int main()
         }
     }
     if(!not_bound) printf("\033[0;32mPass error check!\033[0m\n");
-    else printf("\033[0;31mFail error check! Exceeding data count: %d\033[0m\n", not_bound);
+    else
+    {
+        printf("\033[0;31mFail error check! Exceeding data count: %d\033[0m\n", not_bound);
+        failures++;
+    }
     printf("\033[1mDone with testing cuSZp-p on REL 1E-2!\033[0m\n\n");
 
     // cuSZp-o testing.
@@ -198,7 +209,11 @@ int main()
         }
     }
     if(!not_bound) printf("\033[0;32mPass error check!\033[0m\n");
-    else printf("\033[0;31mFail error check! Exceeding data count: %d\033[0m\n", not_bound);
+    else
+    {
+        printf("\033[0;31mFail error check! Exceeding data count: %d\033[0m\n", not_bound);
+        failures++;
+    }
     printf("\033[1mDone with testing cuSZp-o on REL 1E-2!\033[0m\n");
 
     free(oriData);
@@ -212,5 +227,5 @@ int main()
     cudaFree(d_cmpBytes);
     cudaStreamDestroy(stream);
 
-    return 0;
+    return failures ? 1 : 0;
 }
