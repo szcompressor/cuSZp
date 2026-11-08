@@ -1,0 +1,88 @@
+name: CUDA tests (simulated H100)
+
+# Optional, non-required check. The hosted runners have no GPU, so this builds
+# cuSZp and runs the six cuSZp_test_* programs on a simulated NVIDIA H100
+# (https://github.com/pantheongpu/pantheonsim). A simulator cannot reproduce
+# hardware-specific behavior or timing, so it complements real-GPU testing and
+# does not replace it.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "src/**"
+      - "include/**"
+      - "examples/**"
+      - "cmake/**"
+      - "CMakeLists.txt"
+      - ".github/workflows/gpu-sim.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  cuda-sim:
+    name: CUDA 13.0, simulated H100
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up the simulated GPU and CUDA toolkit
+        uses: pantheongpu/setup-pantheonsim@ca87fe3143b29166822b923d6050945c5179408c # v0.1.5
+        with:
+          gpu: nvidia/h100
+          cuda-toolkit: "13.0"
+
+      # The test programs use 2 GB (f32) and 4 GB (f64) of data, which is far
+      # more than a simulated GPU on a 16 GB runner can hold, so the sizes are
+      # reduced to 64M elements (256 MB f32, 512 MB f64) for this job only. The
+      # edit is made on the checkout and is not committed.
+      - name: Shrink the test data size
+        run: |
+          sed -i -e 's/nbEle = 1024\*1024\*512;/nbEle = 1024*1024*64;/' \
+                 -e 's/dims = {512, 1024, 1024};/dims = {512, 512, 256};/' \
+                 examples/cuSZp_test_*.cpp
+          git diff --stat
+
+      # The simulator runs PTX only (90-virtual) and needs a shared CUDA runtime.
+      - name: Configure project
+        run: |
+          cmake -B build -S . \
+                -DCMAKE_BUILD_TYPE=Release \
+                -DCMAKE_CUDA_COMPILER=/usr/local/cuda-13.0/bin/nvcc \
+                -DCUDAToolkit_ROOT=/usr/local/cuda-13.0 \
+                -DCMAKE_CUDA_ARCHITECTURES=90-virtual \
+                -DCMAKE_CUDA_RUNTIME_LIBRARY=Shared \
+                -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install
+
+      - name: Build and install
+        run: cmake --build build -j3 --target install
+
+      # Each test prints "Pass error check!" or "Fail error check!" for the
+      # fixed, plain and outlier modes, but always exits with status 0, so the
+      # output is checked here: all three modes must pass.
+      - name: Run tests
+        working-directory: install/bin
+        run: |
+          status=0
+          for t in cuSZp_test_f32_1D cuSZp_test_f32_2D cuSZp_test_f32_3D \
+                   cuSZp_test_f64_1D cuSZp_test_f64_2D cuSZp_test_f64_3D; do
+            echo "::group::$t"
+            vgpu run ./$t 2>&1 | tee "$t.log"
+            rc=${PIPESTATUS[0]}
+            echo "::endgroup::"
+            passed=$(grep -c "Pass error check" "$t.log" || true)
+            if [ "$rc" -ne 0 ] || [ "$passed" -ne 3 ] || grep -q "Fail error check" "$t.log"; then
+              echo "::error::$t failed (exit $rc, $passed of 3 modes passed)"
+              status=1
+            fi
+          done
+          exit $status
